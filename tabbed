@@ -37,6 +37,10 @@
 # first activity (active-fg, defaults to red) appear on inactive tab. Last one
 # (actived-fg, blue by default) is set when there is no more possible timeouts.
 # Third one (actives-fg, purple) is set on all in between of these two.
+#
+# 2010-07-25 13:49:01
+# - Integrated renaming ability for tabs from stepb
+# (http://github.com/stepb/urxvt-tabbedex)
 
 
 sub tab_activity_mark ($$) {
@@ -407,6 +411,24 @@ sub tab_key_press {
    my ($self, $tab, $event, $keysym, $str) = @_;
 
    # defaults
+   if ($tab->{is_inputting_name}) {
+      if ($keysym == 0xff0d || $keysym == 0xff8d) { # enter
+         $tab->{name} = $tab->{new_name};
+         $tab->{is_inputting_name} = 0;
+      } elsif ($keysym == 0xff1b) { # escape
+         $tab->{name} = $tab->{old_name};
+         $tab->{is_inputting_name} = 0;
+      } elsif ($keysym == 0xff08) { # backspace
+         substr $tab->{new_name}, -1, 1, "";
+         $tab->{name} = "$tab->{new_name}█";
+      } elsif ($str !~ /[\x00-\x1f\x80-\xaf]/) {
+         $tab->{new_name} .= $str;
+         $tab->{name} = "$tab->{new_name}█";
+      }
+      $self->refresh;
+      return 1;
+   }
+
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
          # shells
@@ -429,6 +451,13 @@ sub tab_key_press {
 
          $self->make_current ($self->{tabs}[$idx % @{ $self->{tabs}}]);
 
+         return 1;
+       }elsif ($keysym == 0xff52) {
+         $tab->{is_inputting_name} = 1;
+         $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
+         $tab->{new_name} = "";
+         $tab->{name} = "█";
+         $self->refresh;
          return 1;
       }
    }
