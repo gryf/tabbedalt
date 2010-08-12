@@ -41,6 +41,38 @@
 # 2010-07-25 13:49:01
 # - Integrated renaming ability for tabs from stepb
 # (http://github.com/stepb/urxvt-tabbedex)
+#
+# 2010-08-12 20:54:46
+# - Added functionality to create definitions of custom shells as a X resource, 
+# under common tabcmds name. This functionality also deprecates feature called 
+# here as a predefined actions. Without any configuration only simple shell is 
+# available under CTRL+SHIFT+N shortcut. After creating first custom shell this 
+# default is not available.
+#
+# Let's assume, that one want to mimic previous configuration, that means three 
+# kind of custom shells: simple one (default shell in the system), midnight 
+# commander and root (namely - su command). Three resources should be created:
+#
+#  URxvt.tabbed.tabcmds.1: N|shell
+#  URxvt.tabbed.tabcmds.2: R|root|su -
+#  URxvt.tabbed.tabcmds.3: M|mc|mc
+#
+# URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There 
+# shouldn't be gaps between numbers, otherwise custom shells defined after a gap 
+# will not work.
+# 
+# Resource values are two or three pipe separated values, which are in order:
+#  - shortcut key, which will be used for invoking custom shell together with 
+#  CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and most 
+#  probably will be removed from script soon, as lots of window managers out 
+#  there make a big use of those keys.
+#  Note: There is limitation for characters used as a shortcut. Because some of 
+#  them are used for control terminal itself (i.e. CTRL+SHIFT+D may not work), and 
+#  also other characters (digits, some special characters etc.). Letters are 
+#  case insensitive.
+#  - name of the tab, it could be anything but the pipe.
+#  - optional command. If omitted, simple shell will be launched.
+# 
 
 
 sub tab_activity_mark ($$) {
@@ -142,6 +174,10 @@ sub new_tab {
    };
 
    push @urxvt::TERM_EXT, urxvt::ext::tabbed::tab::;
+
+   if(@argv){
+      @argv = split(/\ /, '-e ' . $argv[0]);
+   }
 
    my $term = new urxvt::term
       $self->env, $urxvt::RXVTNAME,
@@ -327,6 +363,17 @@ sub on_init {
    $self->{tab_numbers} =
       ($self->x_resource ('tab-numbers') or 'true') !~ /^(?:false|0|no)/i;
 
+   %{$self->{tabcmds}} = ();
+   for (my $idx = 1; defined (my $res = $self->x_resource("tabcmds.$idx")); $idx++){
+      chomp($res);
+      (my @args) = split('\|', $res);
+      my $key = uc(shift(@args));
+      $self->{tabcmds}{$key} = [ @args ];
+   }
+   if(not %{$self->{tabcmds}}){
+      # add default shell command
+      $self->{tabcmds}{'N'} = ('shell');
+   }
    ();
       
 }
@@ -431,19 +478,11 @@ sub tab_key_press {
 
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
-         # shells
-         if ($keysym == 0x4e){ # CTRL+SHIFT+N new shell
-            $self->new_tab("shell");
-            return 1;
-         }elsif ($keysym == 0x4d){ # CTRL+SHIFT+M new mc
-            $self->new_tab("mc", '-e', 'mc.sh');
-            return 1;
-         }elsif ($keysym == 0x52){ # CTRL+SHIFT+R su -
-            $self->new_tab("root", '-e', 'su', '-');
+         if (exists($self->{tabcmds}{chr($keysym)})){
+            $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
             return 1;
          }
       }elsif ($keysym == 0xff51 || $keysym == 0xff53) {
-         # navigation
          my ($idx) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
 
          --$idx if $keysym == 0xff51;
