@@ -43,36 +43,51 @@
 # (http://github.com/stepb/urxvt-tabbedex)
 #
 # 2010-08-12 20:54:46
-# - Added functionality to create definitions of custom shells as a X resource, 
-# under common tabcmds name. This functionality also deprecates feature called 
-# here as a predefined actions. Without any configuration only simple shell is 
-# available under CTRL+SHIFT+N shortcut. After creating first custom shell this 
+# - Added functionality to create definitions of custom shells as a X resource,
+# under common tabcmds name. This functionality also deprecates feature called
+# here as a predefined actions. Without any configuration only simple shell is
+# available under CTRL+SHIFT+N shortcut. After creating first custom shell this
 # default is not available.
 #
-# Let's assume, that one want to mimic previous configuration, that means three 
-# kind of custom shells: simple one (default shell in the system), midnight 
+# Let's assume, that one want to mimic previous configuration, that means three
+# kind of custom shells: simple one (default shell in the system), midnight
 # commander and root (namely - su command). Three resources should be created:
 #
 #  URxvt.tabbed.tabcmds.1: N|shell
 #  URxvt.tabbed.tabcmds.2: R|root|su -
 #  URxvt.tabbed.tabcmds.3: M|mc|mc
 #
-# URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There 
-# shouldn't be gaps between numbers, otherwise custom shells defined after a gap 
+# URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There
+# shouldn't be gaps between numbers, otherwise custom shells defined after a gap
 # will not work.
 # 
 # Resource values are two or three pipe separated values, which are in order:
-#  - shortcut key, which will be used for invoking custom shell together with 
-#  CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and most 
-#  probably will be removed from script soon, as lots of window managers out 
+#  - shortcut key, which will be used for invoking custom shell together with
+#  CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and most
+#  probably will be removed from script soon, as lots of window managers out
 #  there make a big use of those keys.
-#  Note: There is limitation for characters used as a shortcut. Because some of 
-#  them are used for control terminal itself (i.e. CTRL+SHIFT+D may not work), and 
-#  also other characters (digits, some special characters etc.). Letters are 
+#  Note: There is limitation for characters used as a shortcut. Because some of
+#  them are used for control terminal itself (i.e. CTRL+SHIFT+D may not work), and
+#  also other characters (digits, some special characters etc.). Letters are
 #  case insensitive.
 #  - name of the tab, it could be anything but the pipe.
 #  - optional command. If omitted, simple shell will be launched.
 # 
+# 2010-08-28 10:17:02
+# - Removed tab_property_notify hook, because in certain circumstances it 
+#   provides memory consumption. It is especially well seen by running 
+#   mocp[1] and play internet radio station (i.e digitalgunfire.com, but 
+#   there can be others). Observe memory taken by urxvt with top or ps. Also, 
+#   original tabbed extension is affected.
+#
+#   This change will affect i.e. dynamic font change - it will not expand window
+#   to reflect size of a font. Switching to next tab and back will rearrange
+#   content of a tab to current window size.
+#
+#   If anyone have a better idea how to fix memory consumption which is taking
+#   place in copy_properties(), please step forward :)
+#
+#   [1] http://moc.daper.net
 
 
 sub tab_activity_mark ($$) {
@@ -545,15 +560,6 @@ sub tab_key_press {
    ();
 }
 
-sub tab_property_notify {
-   my ($self, $tab, $event) = @_;
-
-   $self->copy_properties
-      if $event->{window} == $tab->parent;
-
-   ();
-}
-
 
 sub tab_add_lines {
    my ($self, $tab) = @_;
@@ -570,7 +576,7 @@ package urxvt::ext::tabbed::tab;
 # simply proxies all interesting calls back to the tabbed class.
 
 {
-   for my $hook qw(start destroy key_press property_notify add_lines) {
+   for my $hook qw(start destroy key_press add_lines) {
       eval qq{
          sub on_$hook {
             my \$parent = \$_[0]{term}{parent}
