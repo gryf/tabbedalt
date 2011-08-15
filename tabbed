@@ -1,7 +1,7 @@
 #! perl
 # Tabbed perl extension for rxvt-unicode terminal emulator.
 # Modified by Roman Dobosz <gryf73 at gmail do com>
-# 
+#
 # 2008-08-22 18:01:55
 # - Modified shortcuts for tab navigation - now it uses shift + left/right
 # arrow to navigate, also creating new shell is changed to CTRL+Shift+n.
@@ -25,7 +25,7 @@
 #     default '16:.:8:::4:+'. Asterisk is always present as a first indicator
 #     character, just like in original tabbed extension.
 #  - new-button, default to 'true'. Used to disable [NEW] button.
-# 
+#
 # 2009-11-24 23:34:51
 # - Added possibility to quickswitch between first ten tabs with predefinied
 # combination of CTRL+1..0 keys, which will activate proper tab.
@@ -60,7 +60,7 @@
 # URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There
 # shouldn't be gaps between numbers, otherwise custom shells defined after a gap
 # will not work.
-# 
+#
 # Resource values are two or three pipe separated values, which are in order:
 #  - shortcut key, which will be used for invoking custom shell together with
 #  CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and most
@@ -72,12 +72,12 @@
 #  case insensitive.
 #  - name of the tab, it could be anything but the pipe.
 #  - optional command. If omitted, simple shell will be launched.
-# 
+#
 # 2010-08-28 10:17:02
-# - Removed tab_property_notify hook, because in certain circumstances it 
-#   provides memory consumption. It is especially well seen by running 
-#   mocp[1] and play internet radio station (i.e digitalgunfire.com, but 
-#   there can be others). Observe memory taken by urxvt with top or ps. Also, 
+# - Removed tab_property_notify hook, because in certain circumstances it
+#   provides memory consumption. It is especially well seen by running
+#   mocp[1] and play internet radio station (i.e digitalgunfire.com, but
+#   there can be others). Observe memory taken by urxvt with top or ps. Also,
 #   original tabbed extension is affected.
 #
 #   This change will affect i.e. dynamic font change - it will not expand window
@@ -88,6 +88,14 @@
 #   place in copy_properties(), please step forward :)
 #
 #   [1] http://moc.daper.net
+#
+# 2011-07-12 21:05:26
+# - Fixed defaults for not defined tabcommands - now it is possible to use 
+#   tabbed just as described.
+# - Added some sort of primitive session ability, defined via resource 
+#   session, which should contain pipe separated shortcuts defined in tabcmds 
+#   resource. If there is no shortcuts (or wrong was defined), plain shell tab 
+#   will appear.
 
 
 sub tab_activity_mark ($$) {
@@ -139,7 +147,7 @@ sub refresh {
       # fill offset in $text with $txt + "|"
       substr $text, $ofs, $len + 1, "$txt|";
 
-      # find and fill with proper colors 
+      # find and fill with proper colors
 
 
       if ($tab == $self->{cur}){
@@ -385,12 +393,11 @@ sub on_init {
       my $key = uc(shift(@args));
       $self->{tabcmds}{$key} = [ @args ];
    }
-   if(not %{$self->{tabcmds}}){
-      # add default shell command
-      $self->{tabcmds}{'N'} = ('shell');
-   }
+
+   @{$self->{session}} = split('\|', $self->x_resource("session")) or ();
+
    ();
-      
+
 }
 
 sub on_start {
@@ -406,7 +413,23 @@ sub on_start {
       shift @argv;
    } while @argv && $argv[0] ne "-e";
 
-   $self->new_tab ("shell", @argv);
+   # Ugly as hell ``session'' implementation
+   my $count = 0;
+   if (qx(ps x|grep urxvt|grep -v grep|wc -l) < 2 && scalar(@{$self->{session}})){
+      for my $item (@{$self->{session}}){
+         if (exists($self->{tabcmds}{uc($item)})){
+            $self->new_tab(@{$self->{tabcmds}{uc($item)}});
+            $count++;
+         }
+      }
+      if ($count == 0) {
+         # no keys was valid, failsafe shell.
+         $self->new_tab ("shell", @argv);
+      }
+
+   }else{
+      $self->new_tab ("shell", @argv);
+   }
 
    if (defined $self->{timeouts}) {
       my $interval = ($self->{timeouts}[@{ $self->{timeouts} } - 1]->[0]);
@@ -493,7 +516,15 @@ sub tab_key_press {
 
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
-         if (exists($self->{tabcmds}{chr($keysym)})){
+         if(not %{$self->{tabcmds}}){
+            print chr($keysym) . "\n";
+            print chr($keysym) == "M". "\n";
+            if ($keysym == 0x4e){   
+               print "wtf?\n";
+               $self->new_tab("shell");
+               return 1;
+            }
+         }elsif(exists($self->{tabcmds}{chr($keysym)})){
             $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
             return 1;
          }
@@ -539,7 +570,7 @@ sub tab_key_press {
          if ($#{$self->{tabs}} >= $num){
             $self->make_current ($self->{tabs}[$num]);
          }
-            
+
          return 1;
       }
    }
@@ -550,7 +581,7 @@ sub tab_key_press {
          $self->new_tab("mail", '-e', 'mutt');
          return 1;
       }
-      # 
+      #
       #elsif ($keysym == [some_other_key_num]){
       #  $self->new_tab("tab displayed name", "-e", "application", "arg1", "arg2", "...");
       #  return 1;
