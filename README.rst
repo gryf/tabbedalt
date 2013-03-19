@@ -13,7 +13,7 @@ Features
   under CTRL+SHIFT+N shortcut. After creating first custom shell this default
   will be discarded.
 
-    .. image:: screens/tabbed.png
+    .. image:: https://raw.github.com/gryf/tabbed/master/screens/tabbed.png
         :alt: Named tabs
 
 * Shortcuts can be attached to Super_L and Super_R keys together with others
@@ -26,7 +26,7 @@ Features
   features like colors and different characters instead of simply asterisk
   depending on time.
 
-    .. image:: screens/tabbed.gif
+    .. image:: https://raw.github.com/gryf/tabbed/master/screens/tabbed.gif
         :alt: Indicator activity
 
 * Integrated tab renaming from `stepb
