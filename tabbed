@@ -293,31 +293,51 @@ sub make_current {
    delete $tab->{lastActivity};
    $self->refresh;
 
-   ();
+   ()
 }
 
 sub on_focus_in {
    my ($self, $event) = @_;
+
    $self->{cur}->focus_in;
-   ();
+
+   ()
 }
 
 sub on_focus_out {
    my ($self, $event) = @_;
+
    $self->{cur}->focus_out;
-   ();
+
+   ()
+}
+
+sub on_tt_write {
+    my ($self, $octets) = @_;
+
+    $self->{cur}->tt_write ($octets);
+
+    1
 }
 
 sub on_key_press {
    my ($self, $event) = @_;
+
    $self->{cur}->key_press ($event->{state}, $event->{keycode}, $event->{time});
-   1;
+
+   1
 }
 
 sub on_key_release {
    my ($self, $event) = @_;
+
    $self->{cur}->key_release ($event->{state}, $event->{keycode}, $event->{time});
-   1;
+
+   1
+}
+
+sub on_button_press {
+   1
 }
 
 sub on_button_release {
@@ -331,6 +351,10 @@ sub on_button_release {
       }
    }
 
+   1
+}
+
+sub on_motion_notify {
    1
 }
 
@@ -439,7 +463,7 @@ sub on_start {
                                    ->cb ( sub { $self->refresh; } );
    }
 
-   ();
+   ()
 }
 
 sub on_configure_notify {
@@ -448,16 +472,16 @@ sub on_configure_notify {
    $self->configure;
    $self->refresh;
 
-   ();
+   ()
 }
 
 sub on_wm_delete_window {
    my ($self) = @_;
 
    $_->destroy for @{ $self->{tabs} };
-   1;
-}
 
+   1
+}
 
 sub tab_start {
    my ($self, $tab) = @_;
@@ -469,7 +493,7 @@ sub tab_start {
 #   $tab->{name} ||= scalar @{ $self->{tabs} };
    $self->make_current ($tab);
 
-   ();
+   ()
 }
 
 sub tab_destroy {
@@ -489,7 +513,7 @@ sub tab_destroy {
       $self->{destroy} = urxvt::iw->new->start->cb (sub { $self->destroy });
    }
 
-   ();
+   ()
 }
 
 sub tab_key_press {
@@ -588,7 +612,7 @@ sub tab_key_press {
       #}
    }
 
-   ();
+   ()
 }
 
 
@@ -618,3 +642,4 @@ package urxvt::ext::tabbed::tab;
       die if $@;
    }
 }
+
