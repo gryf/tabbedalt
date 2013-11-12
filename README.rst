@@ -13,7 +13,7 @@ Features
   under CTRL+SHIFT+N shortcut. After creating first custom shell this default
   will be discarded.
 
-    .. image:: screens/tabbed.png
+    .. image:: https://bitbucket.org/gryf/tabbed/raw/a62b50f65523d9666275c1c4ea1972d0bc4c07ac/screens/tabbed.png
         :alt: Named tabs
 
 * Shortcuts can be attached to Super_L and Super_R keys together with others
@@ -24,7 +24,7 @@ Features
 * Integrated `activity indicator`_ with additional features like colors and
   different characters instead of simply asterisk depending on time.
 
-    .. image:: screens/tabbed.gif
+    .. image:: https://bitbucket.org/gryf/tabbed/raw/a62b50f65523d9666275c1c4ea1972d0bc4c07ac/screens/tabbed.gif
         :alt: Indicator activity
 
 * Integrated tab renaming from `stepb`_.  Default under SHIFT+UP, then type some
