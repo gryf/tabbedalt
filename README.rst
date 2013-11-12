@@ -2,8 +2,8 @@
 Tabbed
 ======
 
-This is modified tabbed extension for well known `urxvt-unicode
-<http://software.schmorp.de/pkg/rxvt-unicode.html>`_ terminal emulator
+This is modified tabbed extension for well known `urxvt-unicode`_ terminal
+emulator
 
 Features
 --------
@@ -13,7 +13,7 @@ Features
   under CTRL+SHIFT+N shortcut. After creating first custom shell this default
   will be discarded.
 
-    .. image:: https://raw.github.com/gryf/tabbed/master/screens/tabbed.png
+    .. image:: screens/tabbed.png
         :alt: Named tabs
 
 * Shortcuts can be attached to Super_L and Super_R keys together with others
@@ -21,17 +21,14 @@ Features
   where *num* can be 0 to 9. CTRL+0 will switch to tenth tab.
 * Numbers in tabs can be switched off in by setting
   resource:``URxvt.tabbed.tab-numbers: false``
-* Integrated `activity indicator
-  <http://mina86.com/2009/05/16/tabbed-urxvt-extension/>`_ with additional
-  features like colors and different characters instead of simply asterisk
-  depending on time.
+* Integrated `activity indicator`_ with additional features like colors and
+  different characters instead of simply asterisk depending on time.
 
-    .. image:: https://raw.github.com/gryf/tabbed/master/screens/tabbed.gif
+    .. image:: screens/tabbed.gif
         :alt: Indicator activity
 
-* Integrated tab renaming from `stepb
-  <http://github.com/stepb/urxvt-tabbedex>`_.  Default under SHIFT+UP, then type
-  some text and RETURN for accept, ESC for cancel.
+* Integrated tab renaming from `stepb`_.  Default under SHIFT+UP, then type some
+  text and RETURN for accept, ESC for cancel.
 
 Installation
 ------------
@@ -106,3 +103,7 @@ After that invoke urxvt with perl extensions enabled::
     $ urxvt -pe tabbed
 
 That's all.
+
+.. _urxvt-unicode: http://software.schmorp.de/pkg/rxvt-unicode.html
+.. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
+.. _stepb: http://github.com/stepb/urxvt-tabbedex

@@ -90,12 +90,16 @@
 #   [1] http://moc.daper.net
 #
 # 2011-07-12 21:05:26
-# - Fixed defaults for not defined tabcommands - now it is possible to use 
+# - Fixed defaults for not defined tabcommands - now it is possible to use
 #   tabbed just as described.
-# - Added some sort of primitive session ability, defined via resource 
-#   session, which should contain pipe separated shortcuts defined in tabcmds 
-#   resource. If there is no shortcuts (or wrong was defined), plain shell tab 
+# - Added some sort of primitive session ability, defined via resource
+#   session, which should contain pipe separated shortcuts defined in tabcmds
+#   resource. If there is no shortcuts (or wrong was defined), plain shell tab
 #   will appear.
+#
+# 2013-11-12 09:23:49
+# - Restored tab_property_notify hook. Whatever was the cause of the memory
+#   consumption is gone or doesn't have anything to do with that function.
 
 
 sub tab_activity_mark ($$) {
@@ -439,7 +443,7 @@ sub on_start {
 
    # Ugly as hell ``session'' implementation
    my $count = 0;
-   if (qx(ps x|grep urxvt|grep -v grep|wc -l) < 2 && scalar(@{$self->{session}})){
+   if (qx(ps x|grep " urxvt "|grep -v grep|wc -l) < 2 && scalar(@{$self->{session}})){
       for my $item (@{$self->{session}}){
          if (exists($self->{tabcmds}{uc($item)})){
             $self->new_tab(@{$self->{tabcmds}{uc($item)}});
@@ -543,7 +547,7 @@ sub tab_key_press {
          if(not %{$self->{tabcmds}}){
             print chr($keysym) . "\n";
             print chr($keysym) == "M". "\n";
-            if ($keysym == 0x4e){   
+            if ($keysym == 0x4e){
                print "wtf?\n";
                $self->new_tab("shell");
                return 1;
@@ -624,6 +628,14 @@ sub tab_add_lines {
    ();
 }
 
+sub tab_property_notify {
+   my ($self, $tab, $event) = @_;
+
+   $self->copy_properties
+      if $event->{window} == $tab->parent;
+
+   ()
+}
 
 package urxvt::ext::tabbed::tab;
 
@@ -631,7 +643,7 @@ package urxvt::ext::tabbed::tab;
 # simply proxies all interesting calls back to the tabbed class.
 
 {
-   for my $hook qw(start destroy key_press add_lines) {
+   for my $hook qw(start destroy key_press add_lines property_notify) {
       eval qq{
          sub on_$hook {
             my \$parent = \$_[0]{term}{parent}
@@ -642,4 +654,3 @@ package urxvt::ext::tabbed::tab;
       die if $@;
    }
 }
-
