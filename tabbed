@@ -6,7 +6,7 @@
 # - Modified shortcuts for tab navigation - now it uses shift + left/right
 # arrow to navigate, also creating new shell is changed to CTRL+Shift+n.
 # - Added shortcuts to move tab between others witch CTRL left/right arrow
-# - Added some predefinied actions - CTRL+Shift+r for "su -" command and
+# - Added some predefined actions - CTRL+Shift+r for "su -" command and
 # CTRL+Shift+m for "mc" and other like named ssh sessions.
 # - Added labels for custom shells (like "root", "mc" and so on)
 #
@@ -27,7 +27,7 @@
 #  - new-button, default to 'true'. Used to disable [NEW] button.
 #
 # 2009-11-24 23:34:51
-# - Added possibility to quickswitch between first ten tabs with predefinied
+# - Added possibility to quick switch between first ten tabs with predefined
 # combination of CTRL+1..0 keys, which will activate proper tab.
 # - Added possibility to remove numbers from tab names by setting resource
 # tab-numbers to false.
@@ -100,6 +100,9 @@
 # 2013-11-12 09:23:49
 # - Restored tab_property_notify hook. Whatever was the cause of the memory
 #   consumption is gone or doesn't have anything to do with that function.
+#
+# 2013-11-26 19:31:55
+# - Added parentheses for hook, should work on Debian now.
 
 
 sub tab_activity_mark ($$) {
@@ -545,10 +548,7 @@ sub tab_key_press {
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
          if(not %{$self->{tabcmds}}){
-            print chr($keysym) . "\n";
-            print chr($keysym) == "M". "\n";
             if ($keysym == 0x4e){
-               print "wtf?\n";
                $self->new_tab("shell");
                return 1;
             }
@@ -643,7 +643,7 @@ package urxvt::ext::tabbed::tab;
 # simply proxies all interesting calls back to the tabbed class.
 
 {
-   for my $hook qw(start destroy key_press add_lines property_notify) {
+   for my $hook (qw(start destroy key_press add_lines property_notify)) {
       eval qq{
          sub on_$hook {
             my \$parent = \$_[0]{term}{parent}
