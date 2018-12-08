@@ -103,6 +103,10 @@
 #
 # 2013-11-26 19:31:55
 # - Added parentheses for hook, should work on Debian now.
+#
+# 2018-11-26 21:25:05 (by Ksyrx)
+# - Changed tab movement shorcuts to Ctrl+j and Ctrl+; instead arrows to
+#   jump between words. 
 
 
 sub tab_activity_mark ($$) {
@@ -575,10 +579,12 @@ sub tab_key_press {
       }
    }
    elsif ($event->{state} & urxvt::ControlMask) {
-      if ($keysym == 0xff51 || $keysym == 0xff53) {
+      #if ($keysym == 0xff51 || $keysym == 0xff53) {
+      if ($keysym == 0x6a || $keysym == 0x3b) {
          # tab movement
          my ($idx1) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
-         my  $idx2  = ($idx1 + ($keysym == 0xff51 ? -1 : +1)) % @{ $self->{tabs} };
+         #my  $idx2  = ($idx1 + ($keysym == 0xff51 ? -1 : +1)) % @{ $self->{tabs} };
+         my $idx2 = ($idx1 + ($keysym == 0x6a ? -1 : +1)) % @{ $self->{tabs} };
 
          ($self->{tabs}[$idx1], $self->{tabs}[$idx2]) =
             ($self->{tabs}[$idx2], $self->{tabs}[$idx1]);
