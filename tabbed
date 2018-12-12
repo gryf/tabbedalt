@@ -445,7 +445,7 @@ sub on_start {
 
    # Ugly as hell ``session'' implementation
    my $count = 0;
-   if (qx(ps x|grep " urxvt "|grep -v grep|wc -l) < 2 && scalar(@{$self->{session}})){
+   if (qx(ps x|grep "[ ]urxvt "|wc -l) < 2 && scalar(@{$self->{session}})){
       for my $item (@{$self->{session}}){
          if (exists($self->{tabcmds}{uc($item)})){
             $self->new_tab(@{$self->{tabcmds}{uc($item)}});
