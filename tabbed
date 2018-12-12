@@ -185,7 +185,6 @@ sub refresh {
 sub new_tab {
    my ($self, @argv) = @_;
 
-   my $offset = $self->fheight;
    my $tab_name = shift @argv;
 
    # save a backlink to us, make sure tabbed is inactive
