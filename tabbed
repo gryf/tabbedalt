@@ -586,7 +586,7 @@ sub tab_key_press {
 
          return 1;
       }
-      elsif ($keysym > 0x29 and $keysym < 0x40) {
+      elsif ($keysym > 0x2f and $keysym < 0x40) {
          # make ctrl+1...0 switch to proper tab
          my $num = $keysym - 0x30;
          if ($num == 0) {
