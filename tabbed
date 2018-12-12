@@ -602,19 +602,6 @@ sub tab_key_press {
       }
    }
 
-   # additional applications for use with Super (Windows) keys
-   elsif ($event->{state} & urxvt::Mod4Mask) {
-      if ($keysym == 0x6d){ # SUPER+m
-         $self->new_tab("mail", '-e', 'mutt');
-         return 1;
-      }
-      #
-      #elsif ($keysym == [some_other_key_num]){
-      #  $self->new_tab("tab displayed name", "-e", "application", "arg1", "arg2", "...");
-      #  return 1;
-      #}
-   }
-
    ()
 }
 
