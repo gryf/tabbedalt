@@ -450,7 +450,7 @@ sub on_start {
    } while @argv && $argv[0] ne "-e";
 
    # Ugly as hell ``session'' implementation
-   if (!(@argv) && (qx(ps x|grep "[ ]urxvt "|wc -l) < 2) && scalar(@{$self->{session}})){
+   if (!(@argv) && (qx(ps x|grep "[ ]urxvt\$"|wc -l) < 2) && scalar(@{$self->{session}})){
       my $count = 0;
       my @command;
       for my $item (@{$self->{session}}){
