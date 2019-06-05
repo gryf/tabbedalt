@@ -103,6 +103,10 @@
 #
 # 2013-11-26 19:31:55
 # - Added parentheses for hook, should work on Debian now.
+#
+# 2019-06-05 10:55:37
+# - fixed couple of bugs regarding session
+# - changed default colors to more sane values
 
 
 sub tab_activity_mark ($$) {
@@ -380,10 +384,10 @@ sub on_init {
    my $actives = $self->x_resource ("actives-fg");
    my $actived = $self->x_resource ("actived-fg");
 
-   defined $fg      or $fg      = 3;
+   defined $fg      or $fg      = 8;
    defined $bg      or $bg      = 0;
-   defined $tabfg   or $tabfg   = 0;
-   defined $tabbg   or $tabbg   = 1;
+   defined $tabfg   or $tabfg   = 15;
+   defined $tabbg   or $tabbg   = 8;
    defined $active  or $active  = 1;
    defined $actives or $actives = 5;
    defined $actived or $actived = 4;

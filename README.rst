@@ -33,22 +33,82 @@ Features
 Installation
 ------------
 
-Copy tabbed into ``~/.urxvt`` directory.
+Copy tabbed into ``~/.urxvt/ext`` directory.
 
 Add these to your ``~/.Xdefaults``::
 
     ! Perl extension config
-    URxvt.perl-ext-common: default
     URxvt.perl-ext: tabbed
-    ! Any scripts placed here will override global ones with the same name
-    URxvt.perl-lib: /home/user/.urxvt/
 
-    ! Tabbed extension configuration
-    URxvt.tabbed.tabbar-fg: 8
-    URxvt.tabbed.tabbar-bg: 0
-    URxvt.tabbed.tab-fg:    15
-    URxvt.tabbed.tab-bg:    8
+And that's it. On some systems, there might be a need to reload X resources:
+
+.. code:: shell-session
+
+   $ xrdb ~/.Xdefaults
+
+Configure
+---------
+
+There are several additional things you can set contrary to the original tabbed
+extension.
+
+New button
+~~~~~~~~~~
+
+You can disable ``[NEW]`` button, just to save the space. Just add following
+line to yours ``~/.Xdefaults`` file::
+
     URxvt.tabbed.new-button: false
+
+Colors
+~~~~~~
+
+You can change all of the colors regarding tabs appearance. Here are defaults::
+
+   URxvt.tabbed.tabbar-fg: 15
+   URxvt.tabbed.tabbar-bg: 8
+   URxvt.tabbed.tab-fg: 8
+   URxvt.tabbed.tab-bg: 0
+   URxvt.tabbed.active-fg: 1
+   URxvt.tabbed.actives-fg: 5
+   URxvt.tabbed.actived-fg: 4
+
+Tab activity
+~~~~~~~~~~~~
+
+Tabs can change colors depending on the activity of terminal under certain tab.
+Colors can be defined as described in section above. You can change the time
+for either *group* of activity::
+
+   URxvt.tabbed.tabbar-timeouts: 16:.:8:::4:+
+
+The value can should be read as colon separated fields. In this case it would
+be read as:
+
+- 16 with symbol ``.``
+- 8 with symbol ``:``
+- 4 with symbol ``+``
+
+Numeric values means amount of seconds, on which three group of activity will
+be triggered. Those group are:
+
+- Inactive for at least 16 seconds
+- Inactive for at least 8 seconds
+- Inactive for at least 4 seconds
+
+Activity of the tab is always represented by asterisk sign (``*``).
+
+You can change those values but bear in mind, that first group should have
+timeout in seconds set higher, than middle one. You can also change symbols for
+those groups.
+
+Tab numbers
+~~~~~~~~~~~
+
+You can turn off tab numbers and leave only name of the tab. Handy to save the
+space::
+
+   URxvt.tabbed.tab-numbers: false
 
 Creating custom classes
 -----------------------
@@ -72,13 +132,11 @@ custom shells defined after a gap will not work.
 Resource values are pipe separated values, which are in order:
 
 * **shortcut key**, which will be used for invoking custom shell together with
-  *CTRL+SHIFT* keys. Mod4 (aka Super or Windows key) are not supported, and most
-  probably will be removed from script soon, as lots of window managers out
-  there make a big use of those keys.
+  *CTRL+SHIFT* keys.
 
 *Note*: There is limitation for characters used as a shortcut. Because some of
 them are used for control terminal itself (i.e. *CTRL+SHIFT+D* may not work),
-and also other characters (digits, some special characters etc.).  Letters are
+and also other characters (digits, some special characters etc.). Letters are
 case insensitive.
 
 * **name of the tab**, it could be anything but the pipe.
@@ -93,16 +151,14 @@ Let's assume, that there are already defined three custom shells, like in
 section above. If one wanted to start shell, mc and root session, following
 line should be placed in ``~/.Xdefaults``::
 
-    URxvt.session: N|M|R
+    URxvt.tabbed.session: N|M|R
 
-Launching tabbed interface
---------------------------
+Renaming tabs
+-------------
 
-After that invoke urxvt with perl extensions enabled::
-
-    $ urxvt -pe tabbed
-
-That's all.
+On runtime, tabs can be renamed using ``SHIFT+UP`` - now you can type name for
+the tab. ``Return`` accept change, ``ESC`` cancels it. This feature was taken
+from `stepb`_ tabbedx repository.
 
 .. _urxvt-unicode: http://software.schmorp.de/pkg/rxvt-unicode.html
 .. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
