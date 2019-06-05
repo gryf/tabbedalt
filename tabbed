@@ -204,9 +204,6 @@ sub new_tab {
 
    push @urxvt::TERM_EXT, urxvt::ext::tabbed::tab::;
 
-   if(@argv){
-      @argv = split(/\ /, '-e ' . $argv[0]);
-   }
 
    my $term = new urxvt::term
       $self->env, $urxvt::RXVTNAME,
@@ -421,7 +418,16 @@ sub on_init {
       chomp($res);
       (my @args) = split('\|', $res);
       my $key = uc(shift(@args));
-      $self->{tabcmds}{$key} = [ @args ];
+      if ($#args == 0) {
+         $self->{tabcmds}{$key} = [ $args[0] ];
+      }else {
+         # split command, insert '-e' before it, re-add tab name at the 
+         # beginning
+         (my @new_args) = ('-e');
+         push @new_args, split / /, $args[1];
+         unshift @new_args, $args[0];
+         $self->{tabcmds}{$key} = [ @new_args ];
+      }
    }
 
    @{$self->{session}} = split('\|', $self->x_resource("session")) or ();
@@ -444,8 +450,9 @@ sub on_start {
    } while @argv && $argv[0] ne "-e";
 
    # Ugly as hell ``session'' implementation
-   my $count = 0;
-   if (qx(ps x|grep "[ ]urxvt "|wc -l) < 2 && scalar(@{$self->{session}})){
+   if (!(@argv) && (qx(ps x|grep "[ ]urxvt "|wc -l) < 2) && scalar(@{$self->{session}})){
+      my $count = 0;
+      my @command;
       for my $item (@{$self->{session}}){
          if (exists($self->{tabcmds}{uc($item)})){
             $self->new_tab(@{$self->{tabcmds}{uc($item)}});
