@@ -9,16 +9,16 @@ Features
 --------
 
 * Possibility to add named tabs, through the X resources, which represents its
-  *class*. Without any configuration only simple shell *class* is available
-  under CTRL+SHIFT+N shortcut. After creating first custom shell this default
-  will be discarded.
+  *class*. Without any configuration only default shell *class* is available
+  under default (``Shift+Down``) shortcut. It might be disabled, and it will
+  become "new style" shortcut - ``Ctrl+Shift+N``. See configuration section
+  below.
 
     .. image:: /screens/tabbed.png
         :alt: Named tabs
 
-* Shortcuts can be attached to Super_L and Super_R keys together with others
-* Fast navigation to first ten tabs (if available) with shortcut CTRL+[num],
-  where *num* can be 0 to 9. CTRL+0 will switch to tenth tab.
+* Fast navigation to first ten tabs (if available) with shortcut ``Ctrl+[num]``,
+  where *num* can be 0 to 9. ``CTRL+0`` will switch to tenth tab.
 * Numbers in tabs can be switched off in by setting
   resource:``URxvt.tabbed.tab-numbers: false``
 * Integrated `activity indicator`_ with additional features like colors and
@@ -27,8 +27,8 @@ Features
     .. image:: /screens/tabbed.gif
         :alt: Indicator activity
 
-* Integrated tab renaming from `stepb`_.  Default under SHIFT+UP, then type some
-  text and RETURN for accept, ESC for cancel.
+* Integrated tab renaming from `stepb`_.  Default under ``Shift+UP``, then type
+  some text and press ``RETURN`` for accept or ``ESC`` for cancel.
 
 Installation
 ------------
@@ -140,7 +140,29 @@ and also other characters (digits, some special characters etc.). Letters are
 case insensitive.
 
 * **name of the tab**, it could be anything but the pipe.
-* **optional command**. If omitted, simple shell will be launched.
+* **optional command**. If omitted, default shell will be launched.
+
+By default, there is default shortcut available for creating standard shell
+(like the *shell* class from example above) under ``Shift+Down``. It might be
+however disabled by setting::
+
+    URxvt.tabbed.disable-shift-down: false
+
+and from now on, default ``Ctrl+Shift+N`` shortcut will be available for
+creating new shell, if there is no existing mapping for this shortcut. You can
+override the mapping for something different, getting above example, we will
+override first class, which reside under shortcut ``Ctrl+Shift+N``::
+
+    URxvt.tabbed.tabcmds.1: N|rss|newsboat
+
+But beware, from now on, you'll be unable to create simple shell tabs, unless
+you explicitly create class for a shell, so the full changed example will looks
+like::
+
+    URxvt.tabbed.tabcmds.1: N|rss|newsboat
+    URxvt.tabbed.tabcmds.2: R|root|su -
+    URxvt.tabbed.tabcmds.3: M|mc|mc
+    URxvt.tabbed.tabcmds.4: S|shell
 
 Startup tabs
 ------------
@@ -151,7 +173,7 @@ Let's assume, that there are already defined three custom shells, like in
 section above. If one wanted to start shell, mc and root session, following
 line should be placed in ``~/.Xdefaults``::
 
-    URxvt.tabbed.session: N|M|R
+    URxvt.tabbed.session: S|M|R
 
 Renaming tabs
 -------------

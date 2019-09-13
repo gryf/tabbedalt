@@ -107,7 +107,10 @@
 # 2019-06-05 10:55:37
 # - fixed couple of bugs regarding session
 # - changed default colors to more sane values
-
+#
+# 2019-09-13 15:15:18
+# - Added shortcut for creating new shell like in original tabbed 
+#  (SHIFT+Down). It can be disabled by an option "disable-shift-down".
 
 sub tab_activity_mark ($$) {
    my ($self, $tab) = @_;
@@ -417,6 +420,10 @@ sub on_init {
    $self->{tab_numbers} =
       ($self->x_resource ('tab-numbers') or 'true') !~ /^(?:false|0|no)/i;
 
+   $self->{disable_shift_down} =
+      ($self->x_resource ('disable-shift-down') 
+              or 'false') =~ /^(?:true|1|yes)/i;
+
    %{$self->{tabcmds}} = ();
    for (my $idx = 1; defined (my $res = $self->x_resource("tabcmds.$idx")); $idx++){
       chomp($res);
@@ -557,13 +564,11 @@ sub tab_key_press {
 
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
-         if(not %{$self->{tabcmds}}){
-            if ($keysym == 0x4e){
-               $self->new_tab("shell");
-               return 1;
-            }
-         }elsif(exists($self->{tabcmds}{chr($keysym)})){
+         if (exists($self->{tabcmds}{chr($keysym)})) {
             $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
+            return 1;
+         } elsif ($self->{disable_shift_down} and $keysym == 0x4e) {
+            $self->new_tab("shell");
             return 1;
          }
       }elsif ($keysym == 0xff51 || $keysym == 0xff53) {
@@ -581,6 +586,9 @@ sub tab_key_press {
          $tab->{new_name} = "";
          $tab->{name} = "█";
          $self->refresh;
+         return 1;
+      } elsif (not $self->{disable_shift_down} and $keysym == 0xff54) {
+         $self->new_tab("shell");
          return 1;
       }
    }
