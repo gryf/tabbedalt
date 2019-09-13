@@ -146,7 +146,7 @@ By default, there is default shortcut available for creating standard shell
 (like the *shell* class from example above) under ``Shift+Down``. It might be
 however disabled by setting::
 
-    URxvt.tabbed.disable-shift-down: false
+    URxvt.tabbed.disable-shift-down: true
 
 and from now on, default ``Ctrl+Shift+N`` shortcut will be available for
 creating new shell, if there is no existing mapping for this shortcut. You can
