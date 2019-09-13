@@ -651,3 +651,5 @@ package urxvt::ext::tabbed::tab;
       die if $@;
    }
 }
+
+# vim: tabstop=3 softtabstop=3 shiftwidth=3 expandtab
