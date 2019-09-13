@@ -1,13 +1,13 @@
 #! perl
 # Tabbed perl extension for rxvt-unicode terminal emulator.
-# Modified by Roman Dobosz <gryf73 at gmail do com>
+# Modified by Roman Dobosz <gryf73 at gmail dot com>
 #
 # 2008-08-22 18:01:55
 # - Modified shortcuts for tab navigation - now it uses shift + left/right
-# arrow to navigate, also creating new shell is changed to CTRL+Shift+n.
+#   arrow to navigate, also creating new shell is changed to CTRL+Shift+n.
 # - Added shortcuts to move tab between others witch CTRL left/right arrow
 # - Added some predefined actions - CTRL+Shift+r for "su -" command and
-# CTRL+Shift+m for "mc" and other like named ssh sessions.
+#   CTRL+Shift+m for "mc" and other like named ssh sessions.
 # - Added labels for custom shells (like "root", "mc" and so on)
 #
 # Please note, I don't know Perl!
@@ -17,9 +17,9 @@
 #
 # 2009-11-23 13:25:13
 # - Merged activity indicator from
-# http://mina86.com/2009/05/16/tabbed-urxvt-extension/#more but without
-# changes on tabs (like adding term title just behind all tabs). New resources
-# can be use to change defaults (as in original solution):
+#   http://mina86.com/2009/05/16/tabbed-urxvt-extension/#more but without
+#   changes on tabs (like adding term title just behind all tabs). New
+#   resources can be use to change defaults (as in original solution):
 #  - tabbed-timeouts with format:
 #     (<timeout> ":" <character> ":")* <timeout> ":" <character> ":"
 #     default '16:.:8:::4:+'. Asterisk is always present as a first indicator
@@ -28,50 +28,52 @@
 #
 # 2009-11-24 23:34:51
 # - Added possibility to quick switch between first ten tabs with predefined
-# combination of CTRL+1..0 keys, which will activate proper tab.
+#   combination of CTRL+1..0 keys, which will activate proper tab.
 # - Added possibility to remove numbers from tab names by setting resource
-# tab-numbers to false.
+#   tab-numbers to false.
 #
 # 2009-11-25 21:40:30
-# - Added colors for tabs, which have activity on them. First is to be set when
-# first activity (active-fg, defaults to red) appear on inactive tab. Last one
-# (actived-fg, blue by default) is set when there is no more possible timeouts.
-# Third one (actives-fg, purple) is set on all in between of these two.
+# - Added colors for tabs, which have activity on them. First is to be set
+#   when first activity (active-fg, defaults to red) appear on inactive tab.
+#   Last one (actived-fg, blue by default) is set when there is no more
+#   possible timeouts. Third one (actives-fg, purple) is set on all in between
+#   of these two.
 #
 # 2010-07-25 13:49:01
 # - Integrated renaming ability for tabs from stepb
-# (http://github.com/stepb/urxvt-tabbedex)
+#   (http://github.com/stepb/urxvt-tabbedex)
 #
 # 2010-08-12 20:54:46
-# - Added functionality to create definitions of custom shells as a X resource,
-# under common tabcmds name. This functionality also deprecates feature called
-# here as a predefined actions. Without any configuration only simple shell is
-# available under CTRL+SHIFT+N shortcut. After creating first custom shell this
-# default is not available.
+# - Added functionality to create definitions of custom shells as a X
+#   resource, under common tabcmds name. This functionality also deprecates
+#   feature called here as a predefined actions. Without any configuration
+#   only simple shell is available under CTRL+SHIFT+N shortcut. After creating
+#   first custom shell this default is not available.
 #
-# Let's assume, that one want to mimic previous configuration, that means three
-# kind of custom shells: simple one (default shell in the system), midnight
-# commander and root (namely - su command). Three resources should be created:
+#   Let's assume, that one want to mimic previous configuration, that means
+#   three kind of custom shells: simple one (default shell in the system),
+#   midnight commander and root (namely - su command). Three resources should
+#   be created:
 #
-#  URxvt.tabbed.tabcmds.1: N|shell
-#  URxvt.tabbed.tabcmds.2: R|root|su -
-#  URxvt.tabbed.tabcmds.3: M|mc|mc
+#     URxvt.tabbed.tabcmds.1: N|shell
+#     URxvt.tabbed.tabcmds.2: R|root|su -
+#     URxvt.tabbed.tabcmds.3: M|mc|mc
 #
-# URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There
-# shouldn't be gaps between numbers, otherwise custom shells defined after a gap
-# will not work.
+#   URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There
+#   shouldn't be gaps between numbers, otherwise custom shells defined after a 
+#   gap will not work.
 #
-# Resource values are two or three pipe separated values, which are in order:
-#  - shortcut key, which will be used for invoking custom shell together with
-#  CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and most
-#  probably will be removed from script soon, as lots of window managers out
-#  there make a big use of those keys.
-#  Note: There is limitation for characters used as a shortcut. Because some of
-#  them are used for control terminal itself (i.e. CTRL+SHIFT+D may not work), and
-#  also other characters (digits, some special characters etc.). Letters are
-#  case insensitive.
-#  - name of the tab, it could be anything but the pipe.
-#  - optional command. If omitted, simple shell will be launched.
+#   Resource values are two or three pipe separated values, which are in order:
+#   - shortcut key, which will be used for invoking custom shell together with
+#     CTRL+SHIFT keys. Mod4 (aka Super or Windows key) are not supported, and
+#     most probably will be removed from script soon, as lots of window
+#     managers out there make a big use of those keys.
+#     Note: There is limitation for characters used as a shortcut. Because some
+#     of them are used for control terminal itself (i.e. CTRL+SHIFT+D may not
+#     work), and also other characters (digits, some special characters etc.).
+#     Letters are case insensitive.
+#   - name of the tab, it could be anything but the pipe.
+#   - optional command. If omitted, simple shell will be launched.
 #
 # 2010-08-28 10:17:02
 # - Removed tab_property_notify hook, because in certain circumstances it
@@ -80,9 +82,9 @@
 #   there can be others). Observe memory taken by urxvt with top or ps. Also,
 #   original tabbed extension is affected.
 #
-#   This change will affect i.e. dynamic font change - it will not expand window
-#   to reflect size of a font. Switching to next tab and back will rearrange
-#   content of a tab to current window size.
+#   This change will affect i.e. dynamic font change - it will not expand 
+#   window to reflect size of a font. Switching to next tab and back will
+#   rearrange content of a tab to current window size.
 #
 #   If anyone have a better idea how to fix memory consumption which is taking
 #   place in copy_properties(), please step forward :)
@@ -109,8 +111,10 @@
 # - changed default colors to more sane values
 #
 # 2019-09-13 15:15:18
-# - Added shortcut for creating new shell like in original tabbed 
-#  (SHIFT+Down). It can be disabled by an option "disable-shift-down".
+# - Added shortcut for creating new shell like in original tabbed
+#   (SHIFT+Down). It can be disabled by an option "disable-shift-down". More 
+#   information in README.
+# - Cleaned up a bit the code and comments.
 
 sub tab_activity_mark ($$) {
    my ($self, $tab) = @_;
@@ -164,14 +168,14 @@ sub refresh {
       # find and fill with proper colors
 
 
-      if ($tab == $self->{cur}){
+      if ($tab == $self->{cur}) {
          @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab}) x $len;
-      }else{
-         if ($act eq "*"){
+      } else {
+         if ($act eq "*") {
             @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_act}) x $len;
-         }elsif($act eq $self->{timeouts}[0][1]){
+         } elsif ($act eq $self->{timeouts}[0][1]) {
             @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acd}) x $len;
-         }elsif($act ne " "){
+         } elsif ($act ne " ") {
             @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acs}) x $len;
          }
       }
@@ -210,7 +214,6 @@ sub new_tab {
    };
 
    push @urxvt::TERM_EXT, urxvt::ext::tabbed::tab::;
-
 
    my $term = new urxvt::term
       $self->env, $urxvt::RXVTNAME,
@@ -403,6 +406,7 @@ sub on_init {
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
+
    if ($timeouts ne '') {
       my @timeouts;
       while ($timeouts =~ /^(\d+):(.)(?::(.*))?$/) {
@@ -425,13 +429,15 @@ sub on_init {
               or 'false') =~ /^(?:true|1|yes)/i;
 
    %{$self->{tabcmds}} = ();
-   for (my $idx = 1; defined (my $res = $self->x_resource("tabcmds.$idx")); $idx++){
+   for (my $idx = 1; defined (my $res = $self->x_resource("tabcmds.$idx")); $idx++) {
+
       chomp($res);
       (my @args) = split('\|', $res);
       my $key = uc(shift(@args));
+
       if ($#args == 0) {
          $self->{tabcmds}{$key} = [ $args[0] ];
-      }else {
+      } else {
          # split command, insert '-e' before it, re-add tab name at the 
          # beginning
          (my @new_args) = ('-e');
@@ -462,10 +468,11 @@ sub on_start {
 
    # Ugly as hell ``session'' implementation
    if (!(@argv) && (qx(ps x|grep "[ ]urxvt\$"|wc -l) < 2) && scalar(@{$self->{session}})){
+
       my $count = 0;
       my @command;
       for my $item (@{$self->{session}}){
-         if (exists($self->{tabcmds}{uc($item)})){
+         if (exists($self->{tabcmds}{uc($item)})) {
             $self->new_tab(@{$self->{tabcmds}{uc($item)}});
             $count++;
          }
@@ -475,7 +482,7 @@ sub on_start {
          $self->new_tab ("shell", @argv);
       }
 
-   }else{
+   } else {
       $self->new_tab ("shell", @argv);
    }
 
@@ -565,13 +572,16 @@ sub tab_key_press {
    if ($event->{state} & urxvt::ShiftMask) {
       if ($event->{state} & urxvt::ControlMask) {
          if (exists($self->{tabcmds}{chr($keysym)})) {
+            # Execute user defined classes of shell programs.
             $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
             return 1;
          } elsif ($self->{disable_shift_down} and $keysym == 0x4e) {
+            # As a failsafe watch under CTRL+SHIFT+N for shell class (if 
+            # SHIFT+DOWN is disabled).
             $self->new_tab("shell");
             return 1;
          }
-      }elsif ($keysym == 0xff51 || $keysym == 0xff53) {
+      } elsif ($keysym == 0xff51 || $keysym == 0xff53) {
          my ($idx) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
 
          --$idx if $keysym == 0xff51;
@@ -580,7 +590,7 @@ sub tab_key_press {
          $self->make_current ($self->{tabs}[$idx % @{ $self->{tabs}}]);
 
          return 1;
-       }elsif ($keysym == 0xff52) {
+       } elsif ($keysym == 0xff52) {
          $tab->{is_inputting_name} = 1;
          $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
          $tab->{new_name} = "";
@@ -588,6 +598,7 @@ sub tab_key_press {
          $self->refresh;
          return 1;
       } elsif (not $self->{disable_shift_down} and $keysym == 0xff54) {
+         # Run shell on SHIFT+DOWN, if enabled.
          $self->new_tab("shell");
          return 1;
       }
@@ -604,8 +615,7 @@ sub tab_key_press {
          $self->make_current ($self->{tabs}[$idx2]);
 
          return 1;
-      }
-      elsif ($keysym > 0x2f and $keysym < 0x40) {
+      } elsif ($keysym > 0x2f and $keysym < 0x40) {
          # make ctrl+1...0 switch to proper tab
          my $num = $keysym - 0x30;
          if ($num == 0) {
