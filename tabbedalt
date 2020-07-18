@@ -143,7 +143,7 @@ sub refresh {
    if ($self->{new_button}) {
       substr $text, 0, 7, "[NEW] |";
       @$rend[0 .. 5] = ($self->{rs_tab}) x 6;
-      push @ofs, [0, 6, -1 ];
+      push @ofs, [0, 6, sub { $_[0]->new_tab("shell") }];
       $ofs = 7;
    }
 
