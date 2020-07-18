@@ -1,9 +1,9 @@
-======
-Tabbed
-======
+=========
+Tabbedalt
+=========
 
-This is modified tabbed extension for well known `urxvt-unicode`_ terminal
-emulator
+This is modified, alternative tabbed extension for well known `urxvt-unicode`_
+terminal emulator
 
 Features
 --------
@@ -20,7 +20,7 @@ Features
 * Fast navigation to first ten tabs (if available) with shortcut ``Ctrl+[num]``,
   where *num* can be 0 to 9. ``CTRL+0`` will switch to tenth tab.
 * Numbers in tabs can be switched off in by setting
-  resource:``URxvt.tabbed.tab-numbers: false``
+  resource:``URxvt.tabbedalt.tab-numbers: false``
 * Integrated `activity indicator`_ with additional features like colors and
   different characters instead of simply asterisk depending on time.
 
@@ -33,12 +33,12 @@ Features
 Installation
 ------------
 
-Copy tabbed into ``~/.urxvt/ext`` directory.
+Copy tabbedalt into ``~/.urxvt/ext`` directory.
 
 Add these to your ``~/.Xdefaults``::
 
     ! Perl extension config
-    URxvt.perl-ext: tabbed
+    URxvt.perl-ext: tabbedalt
 
 And that's it. On some systems, there might be a need to reload X resources:
 
@@ -58,20 +58,20 @@ New button
 You can disable ``[NEW]`` button, just to save the space. Just add following
 line to yours ``~/.Xdefaults`` file::
 
-    URxvt.tabbed.new-button: false
+    URxvt.tabbedalt.new-button: false
 
 Colors
 ~~~~~~
 
 You can change all of the colors regarding tabs appearance. Here are defaults::
 
-   URxvt.tabbed.tabbar-fg: 15
-   URxvt.tabbed.tabbar-bg: 8
-   URxvt.tabbed.tab-fg: 8
-   URxvt.tabbed.tab-bg: 0
-   URxvt.tabbed.active-fg: 1
-   URxvt.tabbed.actives-fg: 5
-   URxvt.tabbed.actived-fg: 4
+   URxvt.tabbedalt.tabbar-fg: 15
+   URxvt.tabbedalt.tabbar-bg: 8
+   URxvt.tabbedalt.tab-fg: 8
+   URxvt.tabbedalt.tab-bg: 0
+   URxvt.tabbedalt.active-fg: 1
+   URxvt.tabbedalt.actives-fg: 5
+   URxvt.tabbedalt.actived-fg: 4
 
 Tab activity
 ~~~~~~~~~~~~
@@ -80,7 +80,7 @@ Tabs can change colors depending on the activity of terminal under certain tab.
 Colors can be defined as described in section above. You can change the time
 for either *group* of activity::
 
-   URxvt.tabbed.tabbar-timeouts: 16:.:8:::4:+
+   URxvt.tabbedalt.tabbar-timeouts: 16:.:8:::4:+
 
 The value can should be read as colon separated fields. In this case it would
 be read as:
@@ -108,7 +108,7 @@ Tab numbers
 You can turn off tab numbers and leave only name of the tab. Handy to save the
 space::
 
-   URxvt.tabbed.tab-numbers: false
+   URxvt.tabbedalt.tab-numbers: false
 
 Creating custom classes
 -----------------------
@@ -121,11 +121,11 @@ Let's assume, that one want to add three kind of custom shells:
 
 Three resources should be created in ``.Xdefaults``::
 
-    URxvt.tabbed.tabcmds.1: N|shell
-    URxvt.tabbed.tabcmds.2: R|root|su -
-    URxvt.tabbed.tabcmds.3: M|mc|mc
+    URxvt.tabbedalt.tabcmds.1: N|shell
+    URxvt.tabbedalt.tabcmds.2: R|root|su -
+    URxvt.tabbedalt.tabcmds.3: M|mc|mc
 
-Numbered attribute just after ``URxvt.tabbed.tabcmds`` resource is an ordinal
+Numbered attribute just after ``URxvt.tabbedalt.tabcmds`` resource is an ordinal
 number, started from 1. There shouldn't be gaps between numbers, otherwise
 custom shells defined after a gap will not work.
 
@@ -146,34 +146,34 @@ By default, there is default shortcut available for creating standard shell
 (like the *shell* class from example above) under ``Shift+Down``. It might be
 however disabled by setting::
 
-    URxvt.tabbed.disable-shift-down: true
+    URxvt.tabbedalt.disable-shift-down: true
 
 and from now on, default ``Ctrl+Shift+N`` shortcut will be available for
 creating new shell, if there is no existing mapping for this shortcut. You can
 override the mapping for something different, getting above example, we will
 override first class, which reside under shortcut ``Ctrl+Shift+N``::
 
-    URxvt.tabbed.tabcmds.1: N|rss|newsboat
+    URxvt.tabbedalt.tabcmds.1: N|rss|newsboat
 
 But beware, from now on, you'll be unable to create simple shell tabs, unless
 you explicitly create class for a shell, so the full changed example will looks
 like::
 
-    URxvt.tabbed.tabcmds.1: N|rss|newsboat
-    URxvt.tabbed.tabcmds.2: R|root|su -
-    URxvt.tabbed.tabcmds.3: M|mc|mc
-    URxvt.tabbed.tabcmds.4: S|shell
+    URxvt.tabbedalt.tabcmds.1: N|rss|newsboat
+    URxvt.tabbedalt.tabcmds.2: R|root|su -
+    URxvt.tabbedalt.tabcmds.3: M|mc|mc
+    URxvt.tabbedalt.tabcmds.4: S|shell
 
 Startup tabs
 ------------
 
-There is possibility to tell tabbed which tabs should be auto started during
+There is possibility to tell tabbedalt which tabs should be auto started during
 first window launch. First, you'll need to have some custom tab commands.
 Let's assume, that there are already defined three custom shells, like in
 section above. If one wanted to start shell, mc and root session, following
 line should be placed in ``~/.Xdefaults``::
 
-    URxvt.tabbed.session: S|M|R
+    URxvt.tabbedalt.session: S|M|R
 
 Renaming tabs
 -------------

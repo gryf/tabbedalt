@@ -55,11 +55,11 @@
 #   midnight commander and root (namely - su command). Three resources should
 #   be created:
 #
-#     URxvt.tabbed.tabcmds.1: N|shell
-#     URxvt.tabbed.tabcmds.2: R|root|su -
-#     URxvt.tabbed.tabcmds.3: M|mc|mc
+#     URxvt.tabbedalt.tabcmds.1: N|shell
+#     URxvt.tabbedalt.tabcmds.2: R|root|su -
+#     URxvt.tabbedalt.tabcmds.3: M|mc|mc
 #
-#   URxvt.tabbed.tabcmds.[number] is a ordinal number, started from 1. There
+#   URxvt.tabbedalt.tabcmds.[number] is a ordinal number, started from 1. There
 #   shouldn't be gaps between numbers, otherwise custom shells defined after a 
 #   gap will not work.
 #
@@ -210,10 +210,10 @@ sub new_tab {
             if defined $value;
       }
 
-      $term->resource (perl_ext_2 => $term->resource ("perl_ext_2") . ",-tabbed");
+      $term->resource (perl_ext_2 => $term->resource ("perl_ext_2") . ",-tabbedalt");
    };
 
-   push @urxvt::TERM_EXT, urxvt::ext::tabbed::tab::;
+   push @urxvt::TERM_EXT, urxvt::ext::tabbedalt::tab::;
 
    my $term = new urxvt::term
       $self->env, $urxvt::RXVTNAME,
@@ -377,7 +377,7 @@ sub on_init {
    $self->{resource} = [map $self->resource ("+$_"), 0 .. urxvt::NUM_RESOURCES - 1];
 
    $self->resource (int_bwidth => 0);
-   $self->resource (name => "URxvt.tabbed");
+   $self->resource (name => "URxvt.tabbedalt");
    $self->resource (pty_fd => -1);
 
    $self->option ($urxvt::OPTION{scrollBar}, 0);
@@ -652,7 +652,7 @@ sub tab_property_notify {
    ()
 }
 
-package urxvt::ext::tabbed::tab;
+package urxvt::ext::tabbedalt::tab;
 
 # helper extension implementing the subwindows of a tabbed terminal.
 # simply proxies all interesting calls back to the tabbed class.
