@@ -267,7 +267,7 @@ sub copy_properties {
       if ($atom == $wm_normal_hints) {
          my (@hints) = unpack "l!*", $items;
 
-         $hints[$_] += $self->{tabheight} for (4, 6, 16);
+         $hints[$_] += $self->{tabheight} for (0, 1, 4, 6, 16);
 
          $items = pack "l!*", @hints;
       }
