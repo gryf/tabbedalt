@@ -60,7 +60,7 @@
 #     URxvt.tabbedalt.tabcmds.3: M|mc|mc
 #
 #   URxvt.tabbedalt.tabcmds.[number] is a ordinal number, started from 1. There
-#   shouldn't be gaps between numbers, otherwise custom shells defined after a 
+#   shouldn't be gaps between numbers, otherwise custom shells defined after a
 #   gap will not work.
 #
 #   Resource values are two or three pipe separated values, which are in order:
@@ -82,7 +82,7 @@
 #   there can be others). Observe memory taken by urxvt with top or ps. Also,
 #   original tabbed extension is affected.
 #
-#   This change will affect i.e. dynamic font change - it will not expand 
+#   This change will affect i.e. dynamic font change - it will not expand
 #   window to reflect size of a font. Switching to next tab and back will
 #   rearrange content of a tab to current window size.
 #
@@ -112,7 +112,7 @@
 #
 # 2019-09-13 15:15:18
 # - Added shortcut for creating new shell like in original tabbed
-#   (SHIFT+Down). It can be disabled by an option "disable-shift-down". More 
+#   (SHIFT+Down). It can be disabled by an option "disable-shift-down". More
 #   information in README.
 # - Cleaned up a bit the code and comments.
 
@@ -425,7 +425,7 @@ sub on_init {
       ($self->x_resource ('tab-numbers') or 'true') !~ /^(?:false|0|no)/i;
 
    $self->{disable_shift_down} =
-      ($self->x_resource ('disable-shift-down') 
+      ($self->x_resource ('disable-shift-down')
               or 'false') =~ /^(?:true|1|yes)/i;
 
    %{$self->{tabcmds}} = ();
@@ -438,7 +438,7 @@ sub on_init {
       if ($#args == 0) {
          $self->{tabcmds}{$key} = [ $args[0] ];
       } else {
-         # split command, insert '-e' before it, re-add tab name at the 
+         # split command, insert '-e' before it, re-add tab name at the
          # beginning
          (my @new_args) = ('-e');
          push @new_args, split / /, $args[1];
@@ -576,7 +576,7 @@ sub tab_key_press {
             $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
             return 1;
          } elsif ($self->{disable_shift_down} and $keysym == 0x4e) {
-            # As a failsafe watch under CTRL+SHIFT+N for shell class (if 
+            # As a failsafe watch under CTRL+SHIFT+N for shell class (if
             # SHIFT+DOWN is disabled).
             $self->new_tab("shell");
             return 1;
