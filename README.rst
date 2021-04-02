@@ -46,6 +46,22 @@ And that's it. On some systems, there might be a need to reload X resources:
 
    $ xrdb ~/.Xdefaults
 
+For quickinstall and run urxvt, tabbedalt can be installed using following
+command:
+
+.. code:: shell-session
+
+   $ curl --create-dirs https://raw.githubusercontent.com/gryf/tabbedalt/master/tabbedalt -o ~/.urxvt/ext/tabbedalt
+   $ urxvt -pe tabbedalt
+
+or even without "installing" at all:
+
+.. code:: shell-session
+
+   $ curl https://raw.githubusercontent.com/gryf/tabbedalt/master/tabbedalt -o /tmp/tabbedalt
+   $ URXVT_PERL_LIB=/tmp urxvt -pe tabbedalt
+
+
 Configure
 ---------
 
