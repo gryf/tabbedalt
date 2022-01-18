@@ -382,27 +382,19 @@ sub on_init {
 
    $self->option ($urxvt::OPTION{scrollBar}, 0);
 
-   my $fg      = $self->x_resource ("tabbar-fg");
-   my $bg      = $self->x_resource ("tabbar-bg");
-   my $tabfg   = $self->x_resource ("tab-fg");
-   my $tabbg   = $self->x_resource ("tab-bg");
-   my $active  = $self->x_resource ("active-fg");
-   my $actives = $self->x_resource ("actives-fg");
-   my $actived = $self->x_resource ("actived-fg");
+   my $fg = ($self->x_resource ("tabbar-fg") or 8);
+   my $bg = ($self->x_resource ("tabbar-bg") or 0);
+   my $tabfg = ($self->x_resource ("tab-fg") or 15);
+   my $tabbg = ($self->x_resource ("tab-bg") or 8);
+   my $active = ($self->x_resource ("active-fg") or 1);
+   my $actives = ($self->x_resource ("actives-fg") or 5);
+   my $actived = ($self->x_resource ("actived-fg") or 4);
 
-   defined $fg      or $fg      = 8;
-   defined $bg      or $bg      = 0;
-   defined $tabfg   or $tabfg   = 15;
-   defined $tabbg   or $tabbg   = 8;
-   defined $active  or $active  = 1;
-   defined $actives or $actives = 5;
-   defined $actived or $actived = 4;
-
-   $self->{rs_tabbar}  = urxvt::SET_COLOR (urxvt::DEFAULT_RSTYLE, $fg      + 2, $bg    + 2);
-   $self->{rs_tab}     = urxvt::SET_COLOR (urxvt::DEFAULT_RSTYLE, $tabfg   + 2, $tabbg + 2);
-   $self->{rs_tab_act} = urxvt::SET_COLOR (urxvt::DEFAULT_RSTYLE, $active  + 2, $bg + 2);
-   $self->{rs_tab_acs} = urxvt::SET_COLOR (urxvt::DEFAULT_RSTYLE, $actives + 2, $bg + 2);
-   $self->{rs_tab_acd} = urxvt::SET_COLOR (urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
+   $self->{rs_tabbar} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $fg + 2, $bg + 2);
+   $self->{rs_tab} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $tabfg + 2, $tabbg + 2);
+   $self->{rs_tab_act} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $active + 2, $bg + 2);
+   $self->{rs_tab_acs} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actives + 2, $bg + 2);
+   $self->{rs_tab_acd} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -561,8 +553,9 @@ sub tab_key_press {
       } elsif ($keysym == 0xff08) { # backspace
          substr $tab->{new_name}, -1, 1, "";
          $tab->{name} = "$tab->{new_name}█";
-      } elsif ($str !~ /[\x00-\x1f\x80-\xaf]/) {
-         $tab->{new_name} .= $str;
+      } elsif ($str !~ /[\x00-\x1f]/) {
+         my $text = $tab->locale_decode($str);
+         $tab->{new_name} .= $text;
          $tab->{name} = "$tab->{new_name}█";
       }
       $self->refresh;
