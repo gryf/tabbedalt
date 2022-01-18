@@ -670,4 +670,10 @@ package urxvt::ext::tabbedalt::tab;
    }
 }
 
+sub on_add_lines {
+  $_[0]->{activity}++
+     or $_[0]{term}{parent}->tab_activity ($_[0]);
+  ()
+}
+
 # vim: tabstop=3 softtabstop=3 shiftwidth=3 expandtab
