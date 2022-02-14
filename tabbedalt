@@ -143,7 +143,7 @@ sub refresh {
    if ($self->{new_button}) {
       substr $text, 0, 7, "[NEW] |";
       @$rend[0 .. 5] = ($self->{rs_tab}) x 6;
-      push @ofs, [0, 6, sub { $_[0]->new_tab("shell") }];
+      push @ofs, [0, 6, sub { $_[0]->_new_tab("shell") }];
       $ofs = 7;
    }
 
@@ -193,7 +193,7 @@ sub refresh {
    $self->want_refresh;
 }
 
-sub new_tab {
+sub _new_tab {
    my ($self, @argv) = @_;
 
    my $tab_name = shift @argv;
@@ -465,17 +465,17 @@ sub on_start {
       my @command;
       for my $item (@{$self->{session}}){
          if (exists($self->{tabcmds}{uc($item)})) {
-            $self->new_tab(@{$self->{tabcmds}{uc($item)}});
+            $self->_new_tab(@{$self->{tabcmds}{uc($item)}});
             $count++;
          }
       }
       if ($count == 0) {
          # no keys was valid, failsafe shell.
-         $self->new_tab ("shell", @argv);
+         $self->_new_tab ("shell", @argv);
       }
 
    } else {
-      $self->new_tab ("shell", @argv);
+      $self->_new_tab ("shell", @argv);
    }
 
    if (defined $self->{timeouts}) {
@@ -566,12 +566,12 @@ sub tab_key_press {
       if ($event->{state} & urxvt::ControlMask) {
          if (exists($self->{tabcmds}{chr($keysym)})) {
             # Execute user defined classes of shell programs.
-            $self->new_tab(@{$self->{tabcmds}{chr($keysym)}});
+            $self->_new_tab(@{$self->{tabcmds}{chr($keysym)}});
             return 1;
          } elsif ($self->{disable_shift_down} and $keysym == 0x4e) {
             # As a failsafe watch under CTRL+SHIFT+N for shell class (if
             # SHIFT+DOWN is disabled).
-            $self->new_tab("shell");
+            $self->_new_tab("shell");
             return 1;
          }
       } elsif ($keysym == 0xff51 || $keysym == 0xff53) {
@@ -592,7 +592,7 @@ sub tab_key_press {
          return 1;
       } elsif (not $self->{disable_shift_down} and $keysym == 0xff54) {
          # Run shell on SHIFT+DOWN, if enabled.
-         $self->new_tab("shell");
+         $self->_new_tab("shell");
          return 1;
       }
    }
