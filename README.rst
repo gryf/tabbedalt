@@ -180,17 +180,6 @@ like::
     URxvt.tabbedalt.tabcmds.3: M|mc|mc
     URxvt.tabbedalt.tabcmds.4: S|shell
 
-Startup tabs
-------------
-
-There is possibility to tell tabbedalt which tabs should be auto started during
-first window launch. First, you'll need to have some custom tab commands.
-Let's assume, that there are already defined three custom shells, like in
-section above. If one wanted to start shell, mc and root session, following
-line should be placed in ``~/.Xdefaults``::
-
-    URxvt.tabbedalt.session: S|M|R
-
 Renaming tabs
 -------------
 

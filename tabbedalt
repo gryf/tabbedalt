@@ -115,6 +115,9 @@
 #   (SHIFT+Down). It can be disabled by an option "disable-shift-down". More
 #   information in README.
 # - Cleaned up a bit the code and comments.
+#
+# 2022-02-14 17:03:52
+# - Removed "session" management
 
 sub tab_activity_mark ($$) {
    my ($self, $tab) = @_;
@@ -439,8 +442,6 @@ sub on_init {
       }
    }
 
-   @{$self->{session}} = split('\|', $self->x_resource("session")) or ();
-
    ();
 
 }
@@ -458,25 +459,7 @@ sub on_start {
       shift @argv;
    } while @argv && $argv[0] ne "-e";
 
-   # Ugly as hell ``session'' implementation
-   if (!(@argv) && (qx(ps x|grep "[ ]urxvt\$"|wc -l) < 2) && scalar(@{$self->{session}})){
-
-      my $count = 0;
-      my @command;
-      for my $item (@{$self->{session}}){
-         if (exists($self->{tabcmds}{uc($item)})) {
-            $self->_new_tab(@{$self->{tabcmds}{uc($item)}});
-            $count++;
-         }
-      }
-      if ($count == 0) {
-         # no keys was valid, failsafe shell.
-         $self->_new_tab ("shell", @argv);
-      }
-
-   } else {
-      $self->_new_tab ("shell", @argv);
-   }
+   $self->_new_tab ("shell", @argv);
 
    if (defined $self->{timeouts}) {
       my $interval = ($self->{timeouts}[@{ $self->{timeouts} } - 1]->[0]);
