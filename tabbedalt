@@ -118,6 +118,93 @@
 #
 # 2022-02-14 17:03:52
 # - Removed "session" management
+#
+# 2022-02-19 18:47:41
+# - Adapted actions propagation from tabbedex
+#   (https://github.com/mina86/urxvt-tabbedex)
+# - Dropped tab commands
+# - Added actions:
+#   - new_tab
+#   - prev_tab
+#   - next_tab
+#   - rename_tab
+#   - move_tab_left
+#   - move_tab_right
+#   - jump_to_tab
+# - Added ability to create custom commands using keysym and actions, i.e.
+#
+#   URxvt.keysym.Control-Shift-T: tabbedalt:new_tab:top:htop
+#
+#   as the tabcommands replacement.
+
+use Scalar::Util;
+
+sub on_init {
+   my ($self) = @_;
+
+   my $main = delete $self->{term}{'tabbedalt_main'};
+   my $type = 'main';
+   if (defined $main) {
+      $type = 'tab';
+      $self->{main} = $main;
+   }
+
+   my $pkg = Scalar::Util::blessed($self);
+   @{"urxvt::ext::tabbedalt::$type\::ISA"} = @{"$pkg\::ISA"};
+   bless $self, "urxvt::ext::tabbedalt::$type";
+
+   enable_action_hooks($self, !defined $main);
+   $self->enable_hooks;
+   $self->init;
+   if ($main->{set_default_keys}){
+      register_default_keys($self);
+   }
+   ()
+}
+
+sub register_default_keys () {
+   my ($self) = @_;
+
+   $self->parse_keysym('Shift-Down', 'tabbedalt:new_tab');
+   $self->parse_keysym('Shift-Up', 'tabbedalt:rename_tab');
+   $self->parse_keysym('Shift-Left', 'tabbedalt:prev_tab');
+   $self->parse_keysym('Shift-Right', 'tabbedalt:next_tab');
+   $self->parse_keysym('Control-Left', 'tabbedalt:move_tab_left');
+   $self->parse_keysym('Control-Right', 'tabbedalt:move_tab_right');
+
+   foreach my $n ( 0..9 ) {
+      $self->parse_keysym("Control-$n", "tabbedalt:jump_to_tab:$n");
+   }
+}
+
+sub enable_action_hooks {
+   my ($self, $ismain) = @_;
+   $self->enable(action => $ismain ? sub {
+         splice @_, 1, 0, $_[0]{cur};
+         goto \&urxvt::ext::tabbedalt::main::command;
+      } : sub {
+         unshift @_, $_[0]{main};
+         goto \&urxvt::ext::tabbedalt::main::command;
+      });
+   1
+}
+
+
+package urxvt::ext::tabbedalt::main;
+
+{
+   my %hooks;
+
+   sub _on($&) {
+      my ($hook, $sub) = @_;
+      $hooks{$hook} = $sub
+   }
+
+   sub enable_hooks {
+      my ($self) = @_;
+      $self->enable(%hooks);
+   }
+}
 
 sub tab_activity_mark ($$) {
    my ($self, $tab) = @_;
@@ -131,6 +218,21 @@ sub tab_activity_mark ($$) {
    }
 
    '*';
+}
+
+sub tab_term_init {
+   my ($self, $term) = @_;
+   $term->{'tabbedalt_main'} = $self;
+   $term->{parent} = $self;
+
+   for (0 .. urxvt::NUM_RESOURCES - 1) {
+      if (defined(my $value = $self->{resource}[$_])) {
+         $term->resource("+$_" => $value);
+      }
+   }
+
+   $term->resource (perl_ext_2 => $term->resource("perl_ext_2") .
+      ",-tabbedalt");
 }
 
 sub refresh {
@@ -169,8 +271,6 @@ sub refresh {
       substr $text, $ofs, $len + 1, "$txt|";
 
       # find and fill with proper colors
-
-
       if ($tab == $self->{cur}) {
          @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab}) x $len;
       } else {
@@ -202,21 +302,9 @@ sub _new_tab {
    my $tab_name = shift @argv;
 
    # save a backlink to us, make sure tabbed is inactive
-   push @urxvt::TERM_INIT, sub {
-      my ($term) = @_;
-      $term->{parent} = $self;
+   push @urxvt::TERM_INIT, sub {$self->tab_term_init($_[0])};
 
-      for (0 .. urxvt::NUM_RESOURCES - 1) {
-         my $value = $self->{resource}[$_];
-
-         $term->resource ("+$_" => $value)
-            if defined $value;
-      }
-
-      $term->resource (perl_ext_2 => $term->resource ("perl_ext_2") . ",-tabbedalt");
-   };
-
-   push @urxvt::TERM_EXT, urxvt::ext::tabbedalt::tab::;
+   push @urxvt::TERM_EXT, urxvt::ext::tabbedalt::;
 
    my $term = new urxvt::term
       $self->env, $urxvt::RXVTNAME,
@@ -245,15 +333,6 @@ sub configure {
    );
 }
 
-# this is needed just to properly resize terminal to fill available space
-# without it Window Maker will make window smaller then required, therefore
-# we'll get ugly border.
-sub on_resize_all_windows {
-   my ($self, $width, $height) = @_;
-
-   1
-}
-
 sub copy_properties {
    my ($self) = @_;
    my $tab = $self->{cur};
@@ -270,7 +349,10 @@ sub copy_properties {
       if ($atom == $wm_normal_hints) {
          my (@hints) = unpack "l!*", $items;
 
-         $hints[$_] += $self->{tabheight} for (0, 1, 4, 6, 16);
+         # TODO: investigate hints a little bit further, since it ignores
+         # window position and place it at 0x0.
+         # $hints[$_] += $self->{tabheight} for (0, 1, 4, 6, 16);
+         $hints[$_] += $self->{tabheight} for (4, 6, 16);
 
          $items = pack "l!*", @hints;
       }
@@ -290,14 +372,24 @@ sub copy_properties {
 
 sub make_current {
    my ($self, $tab) = @_;
+   my $cur = $self->{cur};
 
-   if (my $cur = $self->{cur}) {
+   if ($cur == $tab) {
+      return;
+   }
+
+   if ($cur) {
+      if ($cur->{is_inputting_name}) {
+         return;
+      }
+      $cur->enable_activity_hook(1);
       delete $cur->{lastActivity};
       $cur->XUnmapWindow ($cur->parent) if $cur->mapped;
       $cur->focus_out;
    }
 
    $self->{cur} = $tab;
+   $tab->enable_activity_hook(0);
 
    $self->configure;
    $self->copy_properties;
@@ -312,52 +404,70 @@ sub make_current {
    ()
 }
 
-sub on_focus_in {
-   my ($self, $event) = @_;
+sub _key_event {
+   my ($self, $type, $event) = @_;
 
+   my $tab = $self->{cur};
+   $tab->$type($event->{state}, $event->{keycode}, $event->{time});
+
+   # refresh_check is available since rxvt-unicode 9.22.  For some reason
+   # $tab->can('refresh_check') doesn’t work which is why eval block is
+   # used to silence warnings.
+   eval {
+      $tab->refresh_check;
+   };
+   if ($@ && $@ !~ /refresh_check/) {
+      # If there was a warning unrelated to refresh_check propagate
+      # it.  Otherwise ignore.
+      warn "$@";
+   }
+   1;
+}
+
+_on focus_in => sub {
+   my ($self, $event) = @_;
    $self->{cur}->focus_in;
-
    ()
-}
+};
 
-sub on_focus_out {
+_on focus_out => sub {
    my ($self, $event) = @_;
-
    $self->{cur}->focus_out;
-
    ()
-}
+};
 
-sub on_tt_write {
-    my ($self, $octets) = @_;
+_on tt_write => sub {
+   my ($self, $octets) = @_;
+   $self->{cur}->tt_write ($octets);
+   1
+};
 
-    $self->{cur}->tt_write ($octets);
-
-    1
-}
-
-sub on_key_press {
+_on key_press => sub {
    my ($self, $event) = @_;
 
-   $self->{cur}->key_press ($event->{state}, $event->{keycode}, $event->{time});
+   if ($event->{state} || $event->{keycode} || $event->{time}) {
+      $self->_key_event('key_press', $event);
+   }
 
-   1
-}
+};
 
-sub on_key_release {
+_on key_release => sub {
+   my ($self, $event) = @_;
+   $self->_key_event('key_release', $event);
+};
+
+_on button_release => sub {
    my ($self, $event) = @_;
 
-   $self->{cur}->key_release ($event->{state}, $event->{keycode}, $event->{time});
-
-   1
-}
-
-sub on_button_press {
-   1
-}
-
-sub on_button_release {
-   my ($self, $event) = @_;
+   # React only on left mouse button and scroll wheel, also ignore mouse
+   # events outside the first row, and in-renaming.
+   if ($event->{button} == 2 ||
+      $event->{button} == 3 ||
+      $event->{button} > 5 ||
+      $event->{row} != 0 ||
+      $self->{cur}->{is_inputting_name}) {
+      return ();
+   }
 
    if ($event->{row} == 0) {
       for my $button (@{ $self->{tabofs} }) {
@@ -368,16 +478,17 @@ sub on_button_release {
    }
 
    1
-}
+};
 
 sub on_motion_notify {
    1
 }
 
-sub on_init {
+sub init {
    my ($self) = @_;
 
-   $self->{resource} = [map $self->resource ("+$_"), 0 .. urxvt::NUM_RESOURCES - 1];
+   $self->{resource} = [map $self->resource ("+$_"),
+                        0 .. urxvt::NUM_RESOURCES - 1];
 
    $self->resource (int_bwidth => 0);
    $self->resource (name => "URxvt.tabbedalt");
@@ -398,6 +509,8 @@ sub on_init {
    $self->{rs_tab_act} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $active + 2, $bg + 2);
    $self->{rs_tab_acs} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actives + 2, $bg + 2);
    $self->{rs_tab_acd} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
+   $self->{set_default_keys} = ($self->x_resource('disable-default-keys')
+         or 'true') !~ /^(?:false|0|no)/i;
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -423,30 +536,11 @@ sub on_init {
       ($self->x_resource ('disable-shift-down')
               or 'false') =~ /^(?:true|1|yes)/i;
 
-   %{$self->{tabcmds}} = ();
-   for (my $idx = 1; defined (my $res = $self->x_resource("tabcmds.$idx")); $idx++) {
-
-      chomp($res);
-      (my @args) = split('\|', $res);
-      my $key = uc(shift(@args));
-
-      if ($#args == 0) {
-         $self->{tabcmds}{$key} = [ $args[0] ];
-      } else {
-         # split command, insert '-e' before it, re-add tab name at the
-         # beginning
-         (my @new_args) = ('-e');
-         push @new_args, split / /, $args[1];
-         unshift @new_args, $args[0];
-         $self->{tabcmds}{$key} = [ @new_args ];
-      }
-   }
-
    ();
 
 }
 
-sub on_start {
+_on start => sub { 
    my ($self) = @_;
 
    $self->{tabheight} = $self->int_bwidth + $self->fheight + $self->lineSpace;
@@ -470,24 +564,27 @@ sub on_start {
    }
 
    ()
-}
+};
 
-sub on_configure_notify {
+_on configure_notify => sub {
    my ($self, $event) = @_;
 
    $self->configure;
    $self->refresh;
 
    ()
-}
+};
 
-sub on_wm_delete_window {
+_on wm_delete_window => sub {
    my ($self) = @_;
 
    $_->destroy for @{ $self->{tabs} };
 
    1
-}
+};
+
+
+# tab methods
 
 sub tab_start {
    my ($self, $tab) = @_;
@@ -496,7 +593,6 @@ sub tab_start {
 
    push @{ $self->{tabs} }, $tab;
 
-#   $tab->{name} ||= scalar @{ $self->{tabs} };
    $self->make_current ($tab);
 
    ()
@@ -522,17 +618,31 @@ sub tab_destroy {
    ()
 }
 
-sub tab_key_press {
-   my ($self, $tab, $event, $keysym, $str) = @_;
+sub command {
+   my ($self, $tab, $params) = @_;
+   (my @args) = split(':', $params);
+   my $command = shift @args;
+   $self->$command($params);
 
-   # defaults
+}
+
+sub _rename_tab_key_press {
+   my ($self, $event, $keysym, $str) = @_;
+   my $tab = $self->{cur};
+
+   if (!defined $keysym) {
+      return 0;
+   }
+
    if ($tab->{is_inputting_name}) {
       if ($keysym == 0xff0d || $keysym == 0xff8d) { # enter
          $tab->{name} = $tab->{new_name};
          $tab->{is_inputting_name} = 0;
+         $self->disable('key_press');
       } elsif ($keysym == 0xff1b) { # escape
          $tab->{name} = $tab->{old_name};
          $tab->{is_inputting_name} = 0;
+         $self->disable('key_press');
       } elsif ($keysym == 0xff08) { # backspace
          substr $tab->{new_name}, -1, 1, "";
          $tab->{name} = "$tab->{new_name}█";
@@ -544,79 +654,7 @@ sub tab_key_press {
       $self->refresh;
       return 1;
    }
-
-   if ($event->{state} & urxvt::ShiftMask) {
-      if ($event->{state} & urxvt::ControlMask) {
-         if (exists($self->{tabcmds}{chr($keysym)})) {
-            # Execute user defined classes of shell programs.
-            $self->_new_tab(@{$self->{tabcmds}{chr($keysym)}});
-            return 1;
-         } elsif ($self->{disable_shift_down} and $keysym == 0x4e) {
-            # As a failsafe watch under CTRL+SHIFT+N for shell class (if
-            # SHIFT+DOWN is disabled).
-            $self->_new_tab("shell");
-            return 1;
-         }
-      } elsif ($keysym == 0xff51 || $keysym == 0xff53) {
-         my ($idx) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
-
-         --$idx if $keysym == 0xff51;
-         ++$idx if $keysym == 0xff53;
-
-         $self->make_current ($self->{tabs}[$idx % @{ $self->{tabs}}]);
-
-         return 1;
-       } elsif ($keysym == 0xff52) {
-         $tab->{is_inputting_name} = 1;
-         $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
-         $tab->{new_name} = "";
-         $tab->{name} = "█";
-         $self->refresh;
-         return 1;
-      } elsif (not $self->{disable_shift_down} and $keysym == 0xff54) {
-         # Run shell on SHIFT+DOWN, if enabled.
-         $self->_new_tab("shell");
-         return 1;
-      }
-   }
-   elsif ($event->{state} & urxvt::ControlMask) {
-      if ($keysym == 0xff51 || $keysym == 0xff53) {
-         # tab movement
-         my ($idx1) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
-         my  $idx2  = ($idx1 + ($keysym == 0xff51 ? -1 : +1)) % @{ $self->{tabs} };
-
-         ($self->{tabs}[$idx1], $self->{tabs}[$idx2]) =
-            ($self->{tabs}[$idx2], $self->{tabs}[$idx1]);
-
-         $self->make_current ($self->{tabs}[$idx2]);
-
-         return 1;
-      } elsif ($keysym > 0x2f and $keysym < 0x40) {
-         # make ctrl+1...0 switch to proper tab
-         my $num = $keysym - 0x30;
-         if ($num == 0) {
-            $num = 10;
-         }
-         $num--;
-
-         if ($#{$self->{tabs}} >= $num){
-            $self->make_current ($self->{tabs}[$num]);
-         }
-
-         return 1;
-      }
-   }
-
-   ()
-}
-
-
-sub tab_add_lines {
-   my ($self, $tab) = @_;
-   my $mark = $self->tab_activity_mark($tab);
-   $tab->{lastActivity} = int urxvt::NOW;
-   $self->refresh if $mark ne $self->tab_activity_mark($tab);
-   ();
+   1
 }
 
 sub tab_property_notify {
@@ -628,28 +666,143 @@ sub tab_property_notify {
    ()
 }
 
+sub tab_line_update {
+    my ($self, $tab) = @_;
+    my $mark = $self->tab_activity_mark($tab);
+    $tab->{lastActivity} = int urxvt::NOW;
+    $self->refresh if $mark ne $self->tab_activity_mark($tab);
+    ();
+}
+
+
+# commands
+
+sub new_tab {
+   my ($self, $params) = @_;
+   (my @args) = split(':', $params);
+   shift @args;  # remove command
+   my $name = shift @args;
+   if ($name) {
+      $name = $self->locale_decode($name);
+   }
+
+   $name = "shell" if (!$name);
+
+   if (!(@args)) {
+      $self->_new_tab ($name);
+   } else {
+      (my @new_args) = ('-e');
+      push @new_args, split / /, $args[0];
+      $self->_new_tab ($name, @new_args);
+   }
+}
+
+sub rename_tab {
+   my ($self, $params) = @_;
+   my $tab = $self->{cur};
+   if ($tab->{is_inputting_name}) {
+      return 0;
+   }
+   $tab->{is_inputting_name} = 1;
+   $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
+   $tab->{new_name} = "";
+   $tab->{name} = "█";
+   $self->enable('key_press', \&_rename_tab_key_press);
+   $self->refresh;
+   return 1;
+}
+
+sub move_tab_left {
+   my ($self, $params) = @_;
+   $self->_move_tab(-1);
+   $self->refresh;
+   return 1;
+}
+
+sub move_tab_right {
+   my ($self, $params) = @_;
+   $self->_move_tab(1);
+   $self->refresh;
+   return 1;
+}
+
+sub next_tab {
+   my ($self, $params) = @_;
+   $self->_go_to_tab(1);
+}
+
+sub prev_tab {
+   my ($self, $params) = @_;
+   $self->_go_to_tab(0);
+}
+
+sub jump_to_tab {
+   my ($self, $params) = @_;
+   (my @args) = split(':', $params);
+   shift @args;  # remove command
+   my $nr = $args[0];
+   if ($nr == 0) {
+      $nr = 10;
+   }
+   $nr--;
+
+   if ($#{$self->{tabs}} >= $nr){
+      $self->make_current ($self->{tabs}[$nr]);
+   }
+   ()
+}
+
+sub _go_to_tab {
+   my ($self, $direction) = @_;
+   my $tab = $self->{cur};
+   my ($idx) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
+   $direction? ++$idx : --$idx;
+   $self->make_current ($self->{tabs}[$idx % @{ $self->{tabs}}]);
+   return 1;
+}
+
+sub _move_tab {
+   my ($self, $direction) = @_;
+   my $tab = $self->{cur};
+   my ($idx1) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
+   my  $idx2  = ($idx1 + $direction) % @{ $self->{tabs} };
+   ($self->{tabs}[$idx1], $self->{tabs}[$idx2]) =
+   ($self->{tabs}[$idx2], $self->{tabs}[$idx1]);
+   $self->make_current ($self->{tabs}[$idx2]);
+}
+
+
 package urxvt::ext::tabbedalt::tab;
 
 # helper extension implementing the subwindows of a tabbed terminal.
 # simply proxies all interesting calls back to the tabbed class.
 
 {
-   for my $hook (qw(start destroy key_press add_lines property_notify)) {
-      eval qq{
-         sub on_$hook {
-            my \$parent = \$_[0]{term}{parent}
-               or return;
-            \$parent->tab_$hook (\@_)
-         }
-      };
-      die if $@;
+   my %hooks = map {
+      my $name = "urxvt::ext::tabbedalt::main::tab_$_";
+      $_ => sub {
+         unshift @_, $_[0]{main};
+         goto &$name;
+      }
+   } qw(start destroy property_notify line_update);
+
+   sub enable_hooks {
+      my ($self) = @_;
+      $self->enable(%hooks);
+   }
+
+   sub enable_activity_hook {
+      my ($tab, $enable) = (@_, 1);
+      if ($enable) {
+         $tab->enable(line_update => $hooks{line_update});
+      } else {
+         $tab->disable('line_update');
+      }
    }
 }
 
-sub on_add_lines {
-  $_[0]->{activity}++
-     or $_[0]{term}{parent}->tab_activity ($_[0]);
-  ()
+sub init {
+   0
 }
 
 # vim: tabstop=3 softtabstop=3 shiftwidth=3 expandtab
