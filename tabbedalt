@@ -619,9 +619,13 @@ sub command {
    my ($self, $tab, $params) = @_;
    (my @args) = split(':', $params);
    my $command = shift @args;
-   $self->$command($params);
-
+   eval {
+      $self->$command($params);
+   } or do {
+      warn "Unknown tabbedalt action: $command\n";
+   }
 }
+
 
 sub _rename_tab_key_press {
    my ($self, $event, $keysym, $str) = @_;
