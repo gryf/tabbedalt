@@ -379,7 +379,7 @@ sub make_current {
    }
 
    if ($cur) {
-      if ($cur->{is_inputting_name}) {
+      if ($cur->{is_being_renamed}) {
          return;
       }
       $cur->enable_activity_hook(1);
@@ -465,7 +465,7 @@ _on button_release => sub {
       $event->{button} == 3 ||
       $event->{button} > 5 ||
       $event->{row} != 0 ||
-      $self->{cur}->{is_inputting_name}) {
+      $self->{cur}->{is_being_renamed}) {
       return ();
    }
 
@@ -634,14 +634,14 @@ sub _rename_tab_key_press {
       return 0;
    }
 
-   if ($tab->{is_inputting_name}) {
+   if ($tab->{is_being_renamed}) {
       if ($keysym == 0xff0d || $keysym == 0xff8d) { # enter
          $tab->{name} = $tab->{new_name};
-         $tab->{is_inputting_name} = 0;
+         $tab->{is_being_renamed} = 0;
          $self->disable('key_press');
       } elsif ($keysym == 0xff1b) { # escape
          $tab->{name} = $tab->{old_name};
-         $tab->{is_inputting_name} = 0;
+         $tab->{is_being_renamed} = 0;
          $self->disable('key_press');
       } elsif ($keysym == 0xff08) { # backspace
          substr $tab->{new_name}, -1, 1, "";
@@ -700,10 +700,10 @@ sub new_tab {
 sub rename_tab {
    my ($self, $params) = @_;
    my $tab = $self->{cur};
-   if ($tab->{is_inputting_name}) {
+   if ($tab->{is_being_renamed}) {
       return 0;
    }
-   $tab->{is_inputting_name} = 1;
+   $tab->{is_being_renamed} = 1;
    $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
    $tab->{new_name} = "";
    $tab->{name} = "█";
