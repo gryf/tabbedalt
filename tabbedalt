@@ -469,12 +469,9 @@ _on button_release => sub {
       return ();
    }
 
-   if ($event->{row} == 0) {
-      for my $button (@{ $self->{tabofs} }) {
-         $button->[2]->($self, $event)
-            if $event->{col} >= $button->[0]
-               && $event->{col} < $button->[1];
-      }
+   for my $button (@{ $self->{tabofs} }) {
+      $button->[2]->($self, $event)
+         if $event->{col} >= $button->[0] && $event->{col} < $button->[1];
    }
 
    1
