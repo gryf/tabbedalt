@@ -146,7 +146,7 @@ Disable default keystrokes
 
 By setting::
 
-    URxvt.tabbedalt.disable-default-keys: false
+    URxvt.tabbedalt.disable-default-keys: true
 
 you can completely remove default keystrokes for creating and navigating tabs.
 In fact, if this resource is set to true (default), than tabbedalt will create
@@ -186,12 +186,12 @@ It might be wise to define own shortcuts before disabling default keys.
    In this action, there is only one argument expected - number of the tab,
    i.e.::
 
-       URxvt.keysym.Control-1: tabbedalt:jump_to_tab:0
-       URxvt.keysym.Control-2: tabbedalt:jump_to_tab:1
+       URxvt.keysym.Control-1: tabbedalt:jump_to_tab:1
+       URxvt.keysym.Control-2: tabbedalt:jump_to_tab:2
        …
-       URxvt.keysym.Control-0: tabbedalt:jump_to_tab:9
+       URxvt.keysym.Control-0: tabbedalt:jump_to_tab:0
 
-   Note, that tabs are indexed from 0.
+   Note, that tabs are indexed from 1, and tab 10th is numbered as 0.
 
 #. The rest
 
