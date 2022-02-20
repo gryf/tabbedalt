@@ -664,11 +664,11 @@ sub tab_property_notify {
 }
 
 sub tab_line_update {
-    my ($self, $tab) = @_;
-    my $mark = $self->tab_activity_mark($tab);
-    $tab->{lastActivity} = int urxvt::NOW;
-    $self->refresh if $mark ne $self->tab_activity_mark($tab);
-    ();
+   my ($self, $tab) = @_;
+   my $mark = $self->tab_activity_mark($tab);
+   $tab->{lastActivity} = int urxvt::NOW;
+   $self->refresh if $mark ne $self->tab_activity_mark($tab);
+   ();
 }
 
 
