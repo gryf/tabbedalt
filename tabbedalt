@@ -136,6 +136,9 @@
 #   URxvt.keysym.Control-Shift-T: tabbedalt:new_tab:top:htop
 #
 #   as the tabcommands replacement.
+#
+# 2022-02-20 18:31:19
+# - Fixed nasty bug in renaming tab.
 
 use Scalar::Util;
 
@@ -626,38 +629,6 @@ sub command {
    }
 }
 
-
-sub _rename_tab_key_press {
-   my ($self, $event, $keysym, $str) = @_;
-   my $tab = $self->{cur};
-
-   if (!defined $keysym) {
-      return 0;
-   }
-
-   if ($tab->{is_being_renamed}) {
-      if ($keysym == 0xff0d || $keysym == 0xff8d) { # enter
-         $tab->{name} = $tab->{new_name};
-         $tab->{is_being_renamed} = 0;
-         $self->disable('key_press');
-      } elsif ($keysym == 0xff1b) { # escape
-         $tab->{name} = $tab->{old_name};
-         $tab->{is_being_renamed} = 0;
-         $self->disable('key_press');
-      } elsif ($keysym == 0xff08) { # backspace
-         substr $tab->{new_name}, -1, 1, "";
-         $tab->{name} = "$tab->{new_name}█";
-      } elsif ($str !~ /[\x00-\x1f]/) {
-         my $text = $tab->locale_decode($str);
-         $tab->{new_name} .= $text;
-         $tab->{name} = "$tab->{new_name}█";
-      }
-      $self->refresh;
-      return 1;
-   }
-   1
-}
-
 sub tab_property_notify {
    my ($self, $tab, $event) = @_;
 
@@ -701,16 +672,8 @@ sub new_tab {
 sub rename_tab {
    my ($self, $params) = @_;
    my $tab = $self->{cur};
-   if ($tab->{is_being_renamed}) {
-      return 0;
-   }
-   $tab->{is_being_renamed} = 1;
-   $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
-   $tab->{new_name} = "";
-   $tab->{name} = "█";
-   $self->enable('key_press', \&_rename_tab_key_press);
+   $tab->start_rename_tab;
    $self->refresh;
-   return 1;
 }
 
 sub move_tab_left {
@@ -804,6 +767,51 @@ package urxvt::ext::tabbedalt::tab;
 
 sub init {
    0
+}
+
+sub start_rename_tab {
+   my ($tab) = @_;
+
+   if ($tab->{is_being_renamed}) {
+      return 0;
+   }
+   $tab->{is_being_renamed} = 1;
+   $tab->{old_name} = $tab->{name} ? $tab->{name} : "";
+   $tab->{new_name} = "";
+   $tab->{name} = "█";
+   $tab->enable('key_press', \&_rename_tab_key_press);
+   1
+}
+
+
+sub _rename_tab_key_press {
+   my ($tab, $event, $keysym, $str) = @_;
+
+   if (!defined $keysym) {
+      return 0;
+   }
+
+   if ($tab->{is_being_renamed}) {
+      if ($keysym == 0xff0d || $keysym == 0xff8d) { # enter
+         $tab->{name} = $tab->{new_name};
+         $tab->{is_being_renamed} = 0;
+         $tab->disable('key_press');
+      } elsif ($keysym == 0xff1b) { # escape
+         $tab->{name} = $tab->{old_name};
+         $tab->{is_being_renamed} = 0;
+         $tab->disable('key_press');
+      } elsif ($keysym == 0xff08) { # backspace
+         substr $tab->{new_name}, -1, 1, "";
+         $tab->{name} = "$tab->{new_name}█";
+      } elsif ($str !~ /[\x00-\x1f]/) {
+         my $text = $tab->locale_decode($str);
+         $tab->{new_name} .= $text;
+         $tab->{name} = "$tab->{new_name}█";
+      }
+      $tab->{main}->refresh;
+      return 1;
+   }
+   1
 }
 
 # vim: tabstop=3 softtabstop=3 shiftwidth=3 expandtab
