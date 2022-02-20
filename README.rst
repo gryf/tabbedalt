@@ -10,9 +10,7 @@ Features
 
 * Possibility to add named tabs, through the X resources, which represents its
   *class*. Without any configuration only default shell *class* is available
-  under default (``Shift+Down``) shortcut. It might be disabled, and it will
-  become "new style" shortcut - ``Ctrl+Shift+N``. See configuration section
-  below.
+  under default (``Shift+Down``) shortcut.
 
     .. image:: /screens/tabbed.png
         :alt: Named tabs
@@ -29,6 +27,8 @@ Features
 
 * Integrated tab renaming from `stepb`_.  Default under ``Shift+UP``, then type
   some text and press ``RETURN`` for accept or ``ESC`` for cancel.
+* Added ability to configure own shortcuts using standard ``keysym`` urxvt
+  option. See below for examples.
 
 Installation
 ------------
@@ -126,6 +126,80 @@ space::
 
    URxvt.tabbedalt.tab-numbers: false
 
+Actions
+~~~~~~~
+
+There are several actions, which tabbedalt supports:
+
+* ``new_tab`` - for tab creation
+* ``rename_tab`` - for tab title renaming
+* ``prev_tab`` - for jumping to previous tab
+* ``next_tab`` - for jumping to next tab
+* ``move_tab_left`` - for moving tab to the left
+* ``move_tab_right`` - for moving tab to the right
+* ``jump_to_tab`` - for quickly jumping into first tenth tabs
+
+See next sections for examples. This feature was adapted from `tabbedex`_.
+
+Disable default keystrokes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By setting::
+
+    URxvt.tabbedalt.disable-default-keys: false
+
+you can completely remove default keystrokes for creating and navigating tabs.
+In fact, if this resource is set to true (default), than tabbedalt will create
+several keysyms mapped to the actions:
+
+* ``Shift-Down``: ``new_tab`` - create tab
+* ``Shift-Up``: ``rename_tab`` - for tab title renaming
+* ``Shift-Left``: ``prev_tab`` - for jumping to previous tab
+* ``Shift-Right``: ``next_tab`` - for jumping to next tab
+* ``Shift-Left``: ``move_tab_left`` - for moving tab to the left
+* ``Control-Right``: ``move_tab_right`` - for moving tab to the right
+* ``Control-1..0``: ``jump_to_tab`` - for quickly jumping into first tenth tabs
+
+It might be wise to define own shortcuts before disabling default keys.
+
+#. ``new_tab``
+
+   This action can have up to two arguments separated by colon, in a form::
+
+       URxvt.keysym.desired-keys: tabbedalt:new_tab:tab-title:tab-command
+
+   In this case for ``desired-keys`` shortcut there would be new tab created
+   with title set to ``tab-title``, and command which tab run as
+   ``tab-command``, for example::
+
+       URxvt.keysym.Control-t: tabbedalt:new_tab:htop:htop
+
+   where pressing control+t it will run new tab with title ``htop`` and command
+   ``htop``.
+
+   Both title and command may be omitted. If so, default title ``shell`` will
+   be used in absence of title, and default shell will be run on missing
+   command.
+
+#. ``jump_to_tab``
+
+   In this action, there is only one argument expected - number of the tab,
+   i.e.::
+
+       URxvt.keysym.Control-1: tabbedalt:jump_to_tab:0
+       URxvt.keysym.Control-2: tabbedalt:jump_to_tab:1
+       …
+       URxvt.keysym.Control-0: tabbedalt:jump_to_tab:9
+
+   Note, that tabs are indexed from 0.
+
+#. The rest
+
+   Al the rest of the actions (moving, jumping and renaming) are without
+   argument. For example renaming will look like this::
+
+       URxvt.keysym.Control-r: tabbedalt:rename_tab
+
 Creating custom classes
 -----------------------
 
@@ -135,58 +209,28 @@ Let's assume, that one want to add three kind of custom shells:
 * midnight commander,
 * root (namely - su command)
 
-Three resources should be created in ``.Xdefaults``::
+A way to do this is to associate keystroke for it in ``.Xdefaults`` using
+urxvts ``keysym`` option, and the actions described above::
 
-    URxvt.tabbedalt.tabcmds.1: N|shell
-    URxvt.tabbedalt.tabcmds.2: R|root|su -
-    URxvt.tabbedalt.tabcmds.3: M|mc|mc
+    URxvt.keysym.Control-Shift-N: tabbedalt.new_tab:shell
+    URxvt.keysym.Control-Shift-R: tabbedalt.new_tab:root:su -
+    URxvt.keysym.Control-Shift-M: tabbedalt.new_tab:mc:mc
 
-Numbered attribute just after ``URxvt.tabbedalt.tabcmds`` resource is an ordinal
-number, started from 1. There shouldn't be gaps between numbers, otherwise
-custom shells defined after a gap will not work.
+Resource values are colon separated values, which are in order:
 
-Resource values are pipe separated values, which are in order:
-
-* **shortcut key**, which will be used for invoking custom shell together with
-  *CTRL+SHIFT* keys.
-
-*Note*: There is limitation for characters used as a shortcut. Because some of
-them are used for control terminal itself (i.e. *CTRL+SHIFT+D* may not work),
-and also other characters (digits, some special characters etc.). Letters are
-case insensitive.
-
-* **name of the tab**, it could be anything but the pipe.
+* **plugin name**, which in case of this very plugin would be always
+  ``tabbedalt``.
+* **title of the tab**, it could be anything but the colon.
 * **optional command**. If omitted, default shell will be launched.
-
-By default, there is default shortcut available for creating standard shell
-(like the *shell* class from example above) under ``Shift+Down``. It might be
-however disabled by setting::
-
-    URxvt.tabbedalt.disable-shift-down: true
-
-and from now on, default ``Ctrl+Shift+N`` shortcut will be available for
-creating new shell, if there is no existing mapping for this shortcut. You can
-override the mapping for something different, getting above example, we will
-override first class, which reside under shortcut ``Ctrl+Shift+N``::
-
-    URxvt.tabbedalt.tabcmds.1: N|rss|newsboat
-
-But beware, from now on, you'll be unable to create simple shell tabs, unless
-you explicitly create class for a shell, so the full changed example will looks
-like::
-
-    URxvt.tabbedalt.tabcmds.1: N|rss|newsboat
-    URxvt.tabbedalt.tabcmds.2: R|root|su -
-    URxvt.tabbedalt.tabcmds.3: M|mc|mc
-    URxvt.tabbedalt.tabcmds.4: S|shell
 
 Renaming tabs
 -------------
 
-On runtime, tabs can be renamed using ``SHIFT+UP`` - now you can type name for
+On runtime, tabs can be renamed using (by default) ``Shift+Up`` - now you can type name for
 the tab. ``Return`` accept change, ``ESC`` cancels it. This feature was taken
 from `stepb`_ tabbedx repository.
 
 .. _urxvt-unicode: http://software.schmorp.de/pkg/rxvt-unicode.html
 .. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
 .. _stepb: http://github.com/stepb/urxvt-tabbedex
+.. _tabbedex: https://github.com/mina86/urxvt-tabbedex
