@@ -689,11 +689,13 @@ sub move_tab_right {
 sub next_tab {
    my ($self, $params) = @_;
    $self->_go_to_tab(1);
+   return 1;
 }
 
 sub prev_tab {
    my ($self, $params) = @_;
    $self->_go_to_tab(0);
+   return 1;
 }
 
 sub jump_to_tab {
@@ -709,7 +711,7 @@ sub jump_to_tab {
    if ($#{$self->{tabs}} >= $nr){
       $self->make_current ($self->{tabs}[$nr]);
    }
-   ()
+   return 1;
 }
 
 sub _go_to_tab {
@@ -718,7 +720,6 @@ sub _go_to_tab {
    my ($idx) = grep $self->{tabs}[$_] == $tab, 0 .. $#{ $self->{tabs} };
    $direction? ++$idx : --$idx;
    $self->make_current ($self->{tabs}[$idx % @{ $self->{tabs}}]);
-   return 1;
 }
 
 sub _move_tab {
