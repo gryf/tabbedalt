@@ -509,8 +509,7 @@ sub init {
    $self->{rs_tab_act} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $active + 2, $bg + 2);
    $self->{rs_tab_acs} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actives + 2, $bg + 2);
    $self->{rs_tab_acd} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
-   $self->{set_default_keys} = ($self->x_resource('disable-default-keys')
-         or 'true') !~ /^(?:false|0|no)/i;
+   $self->{set_default_keys} = (! $self->x_resource_boolean('disable-default-keys'));
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -674,6 +673,7 @@ sub rename_tab {
    my $tab = $self->{cur};
    $tab->start_rename_tab;
    $self->refresh;
+   return 1;
 }
 
 sub move_tab_left {
