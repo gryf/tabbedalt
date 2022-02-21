@@ -531,10 +531,6 @@ sub init {
    $self->{tab_numbers} =
       ($self->x_resource ('tab-numbers') or 'true') !~ /^(?:false|0|no)/i;
 
-   $self->{disable_shift_down} =
-      ($self->x_resource ('disable-shift-down')
-              or 'false') =~ /^(?:true|1|yes)/i;
-
    ();
 
 }
