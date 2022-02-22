@@ -139,6 +139,9 @@
 #
 # 2022-02-20 18:31:19
 # - Fixed nasty bug in renaming tab.
+#
+# 2022-02-22 16:49:18
+# - Added feature with autohide tabbar, if there is only single tab
 
 use Scalar::Util;
 
@@ -240,6 +243,19 @@ sub tab_term_init {
 
 sub refresh {
    my ($self) = @_;
+   my $tabs_no = (@{$self->{tabs}});
+
+   if (! $self->{new_button} && $self->{autohide} && $tabs_no == 1 &&
+         ! $self->{cur}->{is_being_renamed}) {
+      $self->{tabheight} = 0;
+      $self->configure;
+      $self->copy_properties;
+      return;
+   } else {
+      $self->{tabheight} = $self->{_tab_height_if_visible};
+      $self->configure;
+      $self->copy_properties;
+   }
 
    my $ncol = $self->ncol;
 
@@ -519,6 +535,7 @@ sub init {
    $self->{rs_tab_acs} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actives + 2, $bg + 2);
    $self->{rs_tab_acd} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
    $self->{set_default_keys} = (! $self->x_resource_boolean('disable-default-keys'));
+   $self->{autohide} = $self->x_resource_boolean('autohide');
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -544,10 +561,12 @@ sub init {
 
 }
 
-_on start => sub { 
+_on start => sub {
    my ($self) = @_;
 
-   $self->{tabheight} = $self->int_bwidth + $self->fheight + $self->lineSpace;
+   $self->{_tab_height_if_visible} = $self->int_bwidth + $self->fheight +
+      $self->lineSpace;
+   $self->{tabheight} = $self->{autohide}? 0 : $self->{_tab_height_if_visible};
 
    $self->cmd_parse ("\033[?25l");
 

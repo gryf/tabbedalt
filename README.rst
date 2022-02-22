@@ -29,6 +29,7 @@ Features
   some text and press ``RETURN`` for accept or ``ESC`` for cancel.
 * Added ability to configure own shortcuts using standard ``keysym`` urxvt
   option. See below for examples.
+* Autohide tab when there is only one tab at the moment.
 
 Installation
 ------------
@@ -125,6 +126,18 @@ You can turn off tab numbers and leave only name of the tab. Handy to save the
 space::
 
    URxvt.tabbedalt.tab-numbers: false
+
+Autohide
+~~~~~~~~
+
+To hide tab bar, when there is a single tab, the following resource need to be
+set to true::
+
+    URxvt.tabbedalt.autohide: true
+
+By default tab bar would be visible even with only one tab. Note, that it will
+be visible regardless of this option, when ``new-button`` is set. So to make
+that option work, you'll need to also disable new-button.
 
 Actions
 ~~~~~~~
@@ -226,9 +239,9 @@ Resource values are colon separated values, which are in order:
 Renaming tabs
 -------------
 
-On runtime, tabs can be renamed using (by default) ``Shift+Up`` - now you can type name for
-the tab. ``Return`` accept change, ``ESC`` cancels it. This feature was taken
-from `stepb`_ tabbedx repository.
+On runtime, tabs can be renamed using (by default) ``Shift+Up`` - now you can
+type name for the tab. ``Return`` accept change, ``ESC`` cancels it. This
+feature was taken from `stepb`_ tabbedx repository.
 
 .. _urxvt-unicode: http://software.schmorp.de/pkg/rxvt-unicode.html
 .. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
