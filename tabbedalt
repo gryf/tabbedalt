@@ -336,6 +336,15 @@ sub configure {
    );
 }
 
+# this is needed just to properly resize terminal to fill available space
+# without it Window Maker will make window smaller then required, therefore
+# we'll get ugly border.
+_on resize_all_windows => sub {
+   my ($self, $width, $height) = @_;
+
+   1
+};
+
 sub copy_properties {
    my ($self) = @_;
    my $tab = $self->{cur};
