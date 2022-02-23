@@ -130,14 +130,10 @@ space::
 Autohide
 ~~~~~~~~
 
-To hide tab bar, when there is a single tab, the following resource need to be
-set to true::
+By default tab bar would be visible even with only one tab. To hide tab bar,
+when there is a single tab, the following resource need to be set to true::
 
     URxvt.tabbedalt.autohide: true
-
-By default tab bar would be visible even with only one tab. Note, that it will
-be visible regardless of this option, when ``new-button`` is set. So to make
-that option work, you'll need to also disable new-button.
 
 Actions
 ~~~~~~~

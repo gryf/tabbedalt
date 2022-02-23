@@ -245,14 +245,14 @@ sub refresh {
    my ($self) = @_;
    my $tabs_no = (@{$self->{tabs}});
 
-   if (! $self->{new_button} && $self->{autohide} && $tabs_no == 1 &&
+   if ($self->{autohide} && $tabs_no == 1 &&
          ! $self->{cur}->{is_being_renamed}) {
       $self->{tabheight} = 0;
       $self->configure;
       $self->copy_properties;
       return;
    } else {
-      $self->{tabheight} = $self->{_tab_height_if_visible};
+      $self->{tabheight} = $self->{_tabheight};
       $self->configure;
       $self->copy_properties;
    }
@@ -564,9 +564,7 @@ sub init {
 _on start => sub {
    my ($self) = @_;
 
-   $self->{_tab_height_if_visible} = $self->int_bwidth + $self->fheight +
-      $self->lineSpace;
-   $self->{tabheight} = $self->{autohide}? 0 : $self->{_tab_height_if_visible};
+   $self->{_tabheight} = $self->int_bwidth + $self->fheight + $self->lineSpace;
 
    $self->cmd_parse ("\033[?25l");
 
