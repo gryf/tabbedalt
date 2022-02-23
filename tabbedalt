@@ -142,6 +142,9 @@
 #
 # 2022-02-22 16:49:18
 # - Added feature with autohide tabbar, if there is only single tab
+#
+# 2022-02-23 20:03:33
+# - Added jump to last tab feature
 
 use Scalar::Util;
 
@@ -536,6 +539,7 @@ sub init {
    $self->{rs_tab_acd} = urxvt::SET_COLOR(urxvt::DEFAULT_RSTYLE, $actived + 2, $bg + 2);
    $self->{set_default_keys} = (! $self->x_resource_boolean('disable-default-keys'));
    $self->{autohide} = $self->x_resource_boolean('autohide');
+   $self->{zero_jump_last} = $self->x_resource_boolean('zero-jump-last');
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -730,7 +734,7 @@ sub jump_to_tab {
    shift @args;  # remove command
    my $nr = $args[0];
    if ($nr == 0) {
-      $nr = 10;
+      if ($self->{zero_jump_last}) { $nr = 0 } else { $nr = 10 }
    }
    $nr--;
 

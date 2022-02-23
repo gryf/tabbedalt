@@ -30,6 +30,7 @@ Features
 * Added ability to configure own shortcuts using standard ``keysym`` urxvt
   option. See below for examples.
 * Autohide tab when there is only one tab at the moment.
+* Ability to assign hotkey to jump to last tab.
 
 Installation
 ------------
@@ -208,6 +209,33 @@ It might be wise to define own shortcuts before disabling default keys.
    argument. For example renaming will look like this::
 
        URxvt.keysym.Control-r: tabbedalt:rename_tab
+
+Jump to last tab
+~~~~~~~~~~~~~~~~
+
+There is a possibility to tell tabbedalt to use ``jump_to_tab`` action to jump
+to the last (rightmost) tab, instead of 10th. It can be done by setting
+resource::
+
+   URxvt.tabbedalt.zero-jump-last: true
+
+so whatever keysym is assigned to ``tabbedalt:jump_to_tab:0`` will select last
+tab, regardless if current number of tabs is more or less than 10. There is
+still a way for selecting 10th tab, i.e.::
+
+   URxvt.tabbedalt.zero-jump-last: true
+
+   URxvt.keysym.Control-F1: tabbedalt:jump_to_tab:1
+   URxvt.keysym.Control-F2: tabbedalt:jump_to_tab:2
+   …
+   URxvt.keysym.Control-F10: tabbedalt:jump_to_tab:10
+   URxvt.keysym.Control-F11: tabbedalt:jump_to_tab:11
+   URxvt.keysym.Control-F12: tabbedalt:jump_to_tab:12
+   URxvt.keysym.Control-0: tabbedalt:jump_to_tab:0
+
+In the example above, there are mapping for jump to tabs 1 - 12 using function
+keys, and `Control+0` to jump whatever last tab is.
+
 
 Creating custom classes
 -----------------------
