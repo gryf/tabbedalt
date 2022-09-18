@@ -63,7 +63,6 @@ or even without "installing" at all:
    $ curl https://raw.githubusercontent.com/gryf/tabbedalt/master/tabbedalt -o /tmp/tabbedalt
    $ URXVT_PERL_LIB=/tmp urxvt -pe tabbedalt
 
-
 Configure
 ---------
 
@@ -120,6 +119,18 @@ You can change those values but bear in mind, that first group should have
 timeout in seconds set higher, than middle one. You can also change symbols for
 those groups.
 
+Flickering
+~~~~~~~~~~
+
+If you happen to see fonts flickering on the terminal, you might want to set
+this resource to true::
+
+   URxvt.tabbedalt.stop-flickering: true
+
+It is false by default, and it will affect how refreshing of the tabs and
+windows is done. I was experienced it mostly on Intel graphics, with bitmap
+fonts, but your mileage may vary.
+
 Tab numbers
 ~~~~~~~~~~~
 
@@ -147,7 +158,7 @@ There are several actions, which tabbedalt supports:
 * ``next_tab`` - for jumping to next tab
 * ``move_tab_left`` - for moving tab to the left
 * ``move_tab_right`` - for moving tab to the right
-* ``jump_to_tab`` - for quickly jumping into first tenth tabs
+* ``jump_to_tab`` - for quickly jump into specific tab
 
 See next sections for examples. This feature was adapted from `tabbedex`_.
 
@@ -159,7 +170,7 @@ By setting::
     URxvt.tabbedalt.disable-default-keys: true
 
 you can completely remove default keystrokes for creating and navigating tabs.
-In fact, if this resource is set to true (default), than tabbedalt will create
+In fact, if this resource is set to false (default), than tabbedalt will create
 several keysyms mapped to the actions:
 
 * ``Shift-Down``: ``new_tab`` - create tab
@@ -235,7 +246,6 @@ still a way for selecting 10th tab, i.e.::
 
 In the example above, there are mapping for jump to tabs 1 - 12 using function
 keys, and `Control+0` to jump whatever last tab is.
-
 
 Creating custom classes
 -----------------------

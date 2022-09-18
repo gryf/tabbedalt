@@ -145,6 +145,9 @@
 #
 # 2022-02-23 20:03:33
 # - Added jump to last tab feature
+#
+# 2022-09-18 14:26:00
+# - Add workaround for font flickering
 
 use Scalar::Util;
 
@@ -342,12 +345,19 @@ sub configure {
 
    my $tab = $self->{cur};
 
-   # this is an extremely dirty way to force a configurenotify, but who cares
-   $tab->XMoveResizeWindow (
-      $tab->parent,
-      0, $self->{tabheight} + 1,
-      $self->width, $self->height - $self->{tabheight}
-   );
+   if (! $self->{stop_flickering}) {
+      # NOTE: switching between height +1 and height can be annoying,
+      # especially well seen as flickering of part of the terminal on Intel
+      # graphics and small fonts.
+   
+      # this is an extremely dirty way to force a configurenotify, but who
+      # cares
+      $tab->XMoveResizeWindow (
+         $tab->parent,
+         0, $self->{tabheight} + 1,
+         $self->width, $self->height - $self->{tabheight}
+      );
+   }
    $tab->XMoveResizeWindow (
       $tab->parent,
       0, $self->{tabheight},
@@ -540,6 +550,7 @@ sub init {
    $self->{set_default_keys} = (! $self->x_resource_boolean('disable-default-keys'));
    $self->{autohide} = $self->x_resource_boolean('autohide');
    $self->{zero_jump_last} = $self->x_resource_boolean('zero-jump-last');
+   $self->{stop_flickering} = $self->x_resource_boolean('stop-flickering');
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
