@@ -8,9 +8,9 @@ terminal emulator
 Features
 --------
 
-* Possibility to add named tabs, through the X resources, which represents its
-  *class*. Without any configuration only default shell *class* is available
-  under default (``Shift+Down``) shortcut.
+* Possibility to add named tabs, through the X resources, which run specified
+  command or another shell (zsh/fish/ash/csh/ksh…). Without any configuration
+  only default shell is available under default (``Shift+Down``) shortcut.
 
     .. image:: /screens/tabbed.png
         :alt: Named tabs
@@ -31,6 +31,8 @@ Features
   option. See below for examples.
 * Autohide tab when there is only one tab at the moment.
 * Ability to assign hotkey to jump to last tab.
+* Configurable confirm dialog for closing urxvt window, when there is more than
+  one tab opened or there is an process still running.
 
 Installation
 ------------
@@ -247,6 +249,42 @@ still a way for selecting 10th tab, i.e.::
 In the example above, there are mapping for jump to tabs 1 - 12 using function
 keys, and `Control+0` to jump whatever last tab is.
 
+Confirm closing window
+~~~~~~~~~~~~~~~~~~~~~~
+
+When working with tabs, sometimes user accidentally could close the window, and
+loose all the applications run on the tabs. There might be multiple tabs open,
+or just one with running process on it (i.e. some editor), where closing window
+by accident could result in data loss. To prevent this, there are couple of
+resources to be set. First one, disabled by default is::
+
+    URxvt.tabbedalt.confirm-quit: false
+
+When set to ``true`` it will execute a message program defined in
+``confirm-program`` resource. It might be whatever X program, which can accept
+text as an argument, and can provide dialog which:
+
+- have two buttons (i.e. yes/no, ok/cancel) where first will exit dialog with 0
+  exit code and the latter will exit with whatever other number,
+- destroying the dialog also emit exit code higher than 0.
+
+So, for example standard `xmessage`_ can be used::
+
+    URxvt.tabbedalt.confirm-program: xmessage -buttons ok:0,cancel:1
+
+or `zenity`_::
+
+    URxvt.tabbedalt.confirm-program: zenity --question --title 'Close window' --text
+
+or `kdialog`_::
+
+    URxvt.tabbedalt.confirm-program: kdialog --title 'Close window' --yesno
+
+or… any other dialog programs which fulfill the above criteria.
+
+Note, that ``confirm-program`` resource have no default value and you'll need
+to configure it alongside with the ``confirm-quit``, otherwise ``confirm-quit``
+will have no effect.
 
 Creating specific commands/shells
 ---------------------------------
@@ -260,14 +298,14 @@ Let's assume, that one want to add three kind of custom shells:
 A way to do this is to associate keystroke for it in ``.Xdefaults`` using
 urxvts ``keysym`` option, and the actions described above::
 
-    URxvt.keysym.Control-Shift-N: tabbedalt.new_tab:shell
-    URxvt.keysym.Control-Shift-R: tabbedalt.new_tab:root:su -
-    URxvt.keysym.Control-Shift-M: tabbedalt.new_tab:mc:mc
+    URxvt.keysym.Control-Shift-N: tabbedalt:new_tab:shell
+    URxvt.keysym.Control-Shift-R: tabbedalt:new_tab:root:su -
+    URxvt.keysym.Control-Shift-M: tabbedalt:new_tab:mc:mc
 
 Resource values are colon separated values, which are in order:
 
-* **plugin name**, which in case of this very plugin would be always
-  ``tabbedalt``.
+* **plugin name:command**, which in this case of creating new tab will be
+  ``tabbedalt:new_tab``.
 * **title of the tab**, it could be anything but the colon.
 * **optional command**. If omitted, default shell will be launched.
 
@@ -282,3 +320,6 @@ feature was taken from `stepb`_ tabbedx repository.
 .. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
 .. _stepb: http://github.com/stepb/urxvt-tabbedex
 .. _tabbedex: https://github.com/mina86/urxvt-tabbedex
+.. _xmessage: https://gitlab.freedesktop.org/xorg/app/xmessage
+.. _zenity: https://wiki.gnome.org/Projects/Zenity
+.. _kdialog: https://develop.kde.org/docs/administration/kdialog

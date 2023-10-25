@@ -148,6 +148,10 @@
 #
 # 2022-09-18 14:26:00
 # - Add workaround for font flickering
+#
+# 2023-10-24 21:14:56
+# - Added confirmation when closing window when there is more than one tab or 
+#   there is a process still running.
 
 use Scalar::Util;
 
@@ -467,12 +471,18 @@ sub _key_event {
 
 _on focus_in => sub {
    my ($self, $event) = @_;
+   if (defined($self->{is_being_destroyed})) {
+      return
+   }
    $self->{cur}->focus_in;
    ()
 };
 
 _on focus_out => sub {
    my ($self, $event) = @_;
+   if (defined($self->{is_being_destroyed})) {
+      return
+   }
    $self->{cur}->focus_out;
    ()
 };
@@ -551,6 +561,8 @@ sub init {
    $self->{autohide} = $self->x_resource_boolean('autohide');
    $self->{zero_jump_last} = $self->x_resource_boolean('zero-jump-last');
    $self->{stop_flickering} = $self->x_resource_boolean('stop-flickering');
+   $self->{confirm_quit} = $self->x_resource_boolean('confirm-quit');
+   $self->{confirm_program} = $self->x_resource('confirm-program');
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -614,7 +626,55 @@ _on configure_notify => sub {
 _on wm_delete_window => sub {
    my ($self) = @_;
 
-   $_->destroy for @{ $self->{tabs} };
+   if ($self->{confirm_quit} and $self->{confirm_program}) {
+      my $tab_count = @{ $self->{tabs} };
+      my $subp_count = 0;
+      my @subprocesses = split(/\n/, `ps --ppid $$ -o pid=,cmd=`);
+      my %process_to_skip = ( "bash"=>1, "zsh"=>1, "ps"=>1, "fish"=>1, "sh"=>1 );
+
+      foreach my $line (@subprocesses) {
+         chomp $line;
+         my @split_line = split(/ /, $line);
+         my $pid = @split_line[0];
+         my $proc_name = @split_line[1];
+         chomp $proc_name;
+         if (!exists $process_to_skip{$proc_name}) {
+            $subp_count = $subp_count + 1;
+         } else {
+            $subp_count = $subp_count + `ps --ppid $pid -o pid= | wc -l`;
+         }
+      }
+
+      if ($tab_count > 1 or $subp_count > 0) {
+         my $msg = "";
+         $msg = "There are $tab_count tabs opened" if ($tab_count > 1);
+
+         if ($subp_count > 0) {
+            if (! $msg) {
+               $msg = "There is $subp_count active processes running.";
+               $msg = "$msg Are you sure you want to close urxvt?";
+            } else {
+               $msg = "$msg and there is $subp_count active processes running.";
+               $msg = "$msg Are you sure you want to close urxvt?";
+            }
+         }else{
+            $msg = "$msg. Are you sure you want to close urxvt?";
+         }
+
+         `$self->{confirm_program} '$msg'`;
+
+         if ($? == 0) {
+            $self->{is_being_destroyed} = 1;
+            # stop the timers, as we changed focus
+            $self->{timer}->stop();
+            $_->destroy for @{ $self->{tabs} };
+         }
+      } else {
+         $_->destroy for @{ $self->{tabs} };
+      }
+   } else {
+      $_->destroy for @{ $self->{tabs} };
+   }
 
    1
 };
