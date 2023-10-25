@@ -247,8 +247,9 @@ still a way for selecting 10th tab, i.e.::
 In the example above, there are mapping for jump to tabs 1 - 12 using function
 keys, and `Control+0` to jump whatever last tab is.
 
-Creating custom classes
------------------------
+
+Creating specific commands/shells
+---------------------------------
 
 Let's assume, that one want to add three kind of custom shells:
 
