@@ -688,12 +688,20 @@ _on wm_delete_window => sub {
                $_->destroy for @{ $self->{tabs} };
             }
          } else {
-            my $marginc = int(($self->ncol - length $msg)/2);
+            my $marginc = 0;
+            $qst = "$qst (y/n)";
+            if ((length $msg) > (length $qst)) {
+               print("length $msg > length $qst\n");
+               $marginc = int(($self->ncol - length $msg)/2);
+            } elsif ((length $msg) <= (length $qst)) {
+               print("length $msg <= length $qst\n");
+               $marginc = int(($self->ncol - length $qst)/2);
+            }
             my $marginr = int(($self->nrow - 4)/2);
             my $tab = $self->{cur};
 
             $tab->{overlay} = $tab->overlay_simple($marginc, $marginr,
-                                                   "$msg\n$qst (y/n)");
+                                                   "$msg\n$qst");
             # action for removing all tabs will be decided in following 
             # method.
             $tab->enable(key_press => \&dialog_key_press);
