@@ -152,6 +152,9 @@
 # 2023-10-24 21:14:56
 # - Added confirmation when closing window when there is more than one tab or 
 #   there is a process still running.
+#
+# 2023-10-28 16:30:32
+# - Added overlay based dialog to confirm closing urxvt window
 
 use Scalar::Util;
 
@@ -588,6 +591,23 @@ sub init {
 
 }
 
+sub dialog_key_press {
+   # react only on certain keys:
+   # n and ESC - this case will delete the overlay
+   # y and Enter - in this case, all tabs will be destroyed
+   my ($tab, $event, $keysym, $str) = @_;
+
+   if ($keysym == 0xff0d || $keysym == 0xff8d || $keysym == 0x79) { # enter/y
+      $tab->disable('key_press');
+      $_->destroy for @{ $tab->{main}->{tabs} };
+   } elsif ($keysym == 0xff1b || $keysym == 0x6e) { # escape/n
+      delete $tab->{overlay};
+      $tab->disable('key_press');
+      $tab->{main}->refresh;
+   }
+   return 1;
+}
+
 _on start => sub {
    my ($self) = @_;
 
@@ -626,7 +646,7 @@ _on configure_notify => sub {
 _on wm_delete_window => sub {
    my ($self) = @_;
 
-   if ($self->{confirm_quit} and $self->{confirm_program}) {
+   if ($self->{confirm_quit}) {
       my $tab_count = @{ $self->{tabs} };
       my $subp_count = 0;
       my @subprocesses = split(/\n/, `ps --ppid $$ -o pid=,cmd=`);
@@ -647,27 +667,36 @@ _on wm_delete_window => sub {
 
       if ($tab_count > 1 or $subp_count > 0) {
          my $msg = "";
+         my $qst = "Are you sure you want to close urxvt?";
          $msg = "There are $tab_count tabs opened" if ($tab_count > 1);
 
          if ($subp_count > 0) {
             if (! $msg) {
                $msg = "There is $subp_count active processes running.";
-               $msg = "$msg Are you sure you want to close urxvt?";
             } else {
                $msg = "$msg and there is $subp_count active processes running.";
-               $msg = "$msg Are you sure you want to close urxvt?";
             }
-         }else{
-            $msg = "$msg. Are you sure you want to close urxvt?";
          }
 
-         `$self->{confirm_program} '$msg'`;
+         if ($self->{confirm_program}) {
+            `$self->{confirm_program} '$msg $qst'`;
 
-         if ($? == 0) {
-            $self->{is_being_destroyed} = 1;
-            # stop the timers, as we changed focus
-            $self->{timer}->stop();
-            $_->destroy for @{ $self->{tabs} };
+            if ($? == 0) {
+               $self->{is_being_destroyed} = 1;
+               # stop the timers, as we changed focus
+               $self->{timer}->stop();
+               $_->destroy for @{ $self->{tabs} };
+            }
+         } else {
+            my $marginc = int(($self->ncol - length $msg)/2);
+            my $marginr = int(($self->nrow - 4)/2);
+            my $tab = $self->{cur};
+
+            $tab->{overlay} = $tab->overlay_simple($marginc, $marginr,
+                                                   "$msg\n$qst (y/n)");
+            # action for removing all tabs will be decided in following 
+            # method.
+            $tab->enable(key_press => \&dialog_key_press);
          }
       } else {
          $_->destroy for @{ $self->{tabs} };
@@ -880,7 +909,6 @@ sub start_rename_tab {
    $tab->enable('key_press', \&_rename_tab_key_press);
    1
 }
-
 
 sub _rename_tab_key_press {
    my ($tab, $event, $keysym, $str) = @_;

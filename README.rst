@@ -255,14 +255,24 @@ Confirm closing window
 When working with tabs, sometimes user accidentally could close the window, and
 loose all the applications run on the tabs. There might be multiple tabs open,
 or just one with running process on it (i.e. some editor), where closing window
-by accident could result in data loss. To prevent this, there are couple of
-resources to be set. First one, disabled by default is::
+by accident could result in data loss. To prevent this, there are two
+additional resources that can be set. First one, disabled by default is::
 
     URxvt.tabbedalt.confirm-quit: false
 
-When set to ``true`` it will execute a message program defined in
-``confirm-program`` resource. It might be whatever X program, which can accept
-text as an argument, and can provide dialog which:
+When set to ``true`` it will either execute a message program or will display 
+an urxvt overlay with the dialog directly on current tab. Note that overlay
+dialog will expect the user to either press:
+
+- ``y`` or ``enter`` key to close the window
+- ``n`` or ``escape`` key to deny closing it
+
+Second one is to provide X dialog program::
+
+    URxvt.tabbedalt.confirm-program:
+
+It might be whatever X program, which can accept text as an argument, and can
+provide dialog which:
 
 - have two buttons (i.e. yes/no, ok/cancel) where first will exit dialog with 0
   exit code and the latter will exit with whatever other number,
@@ -281,10 +291,6 @@ or `kdialog`_::
     URxvt.tabbedalt.confirm-program: kdialog --title 'Close window' --yesno
 
 or… any other dialog programs which fulfill the above criteria.
-
-Note, that ``confirm-program`` resource have no default value and you'll need
-to configure it alongside with the ``confirm-quit``, otherwise ``confirm-quit``
-will have no effect.
 
 Creating specific commands/shells
 ---------------------------------
