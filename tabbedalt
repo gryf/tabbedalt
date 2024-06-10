@@ -155,6 +155,9 @@
 #
 # 2023-10-28 16:30:32
 # - Added overlay based dialog to confirm closing urxvt window
+#
+# 2024-06-10 10:34:47
+# - Added option for disabling activity marks and colors
 
 use Scalar::Util;
 
@@ -228,6 +231,7 @@ package urxvt::ext::tabbedalt::main;
 sub tab_activity_mark ($$) {
    my ($self, $tab) = @_;
    return ' ' unless defined $tab->{lastActivity};
+   return ' ' if $self->{disable_activity};
    return ' ' if $tab == $self->{cur};
    if (defined $self->{timeouts}) {
       my $diff = int urxvt::NOW - $tab->{lastActivity};
@@ -306,12 +310,14 @@ sub refresh {
       if ($tab == $self->{cur}) {
          @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab}) x $len;
       } else {
-         if ($act eq "*") {
-            @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_act}) x $len;
-         } elsif ($act eq $self->{timeouts}[0][1]) {
-            @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acd}) x $len;
-         } elsif ($act ne " ") {
-            @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acs}) x $len;
+         if (!$self->{disable_activity}) {
+            if ($act eq "*") {
+               @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_act}) x $len;
+            } elsif ($act eq $self->{timeouts}[0][1]) {
+               @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acd}) x $len;
+            } elsif ($act ne " ") {
+               @$rend[$ofs .. $ofs + $len - 1] = ($self->{rs_tab_acs}) x $len;
+            }
          }
       }
 
@@ -566,6 +572,7 @@ sub init {
    $self->{stop_flickering} = $self->x_resource_boolean('stop-flickering');
    $self->{confirm_quit} = $self->x_resource_boolean('confirm-quit');
    $self->{confirm_program} = $self->x_resource('confirm-program');
+   $self->{disable_activity} = $self->x_resource_boolean('disable-activity');
 
    my $timeouts = $self->x_resource ("tabbar-timeouts");
    $timeouts = '16:.:8:::4:+' unless defined $timeouts;
@@ -691,10 +698,8 @@ _on wm_delete_window => sub {
             my $marginc = 0;
             $qst = "$qst (y/n)";
             if ((length $msg) > (length $qst)) {
-               print("length $msg > length $qst\n");
                $marginc = int(($self->ncol - length $msg)/2);
             } elsif ((length $msg) <= (length $qst)) {
-               print("length $msg <= length $qst\n");
                $marginc = int(($self->ncol - length $qst)/2);
             }
             my $marginr = int(($self->nrow - 4)/2);

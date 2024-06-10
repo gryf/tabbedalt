@@ -121,6 +121,10 @@ You can change those values but bear in mind, that first group should have
 timeout in seconds set higher, than middle one. You can also change symbols for
 those groups.
 
+Tab activity can be disabled by setting::
+
+    URxvt.tabbedalt.disable-activity: true
+
 Flickering
 ~~~~~~~~~~
 
