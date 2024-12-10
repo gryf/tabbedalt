@@ -150,7 +150,7 @@
 # - Add workaround for font flickering
 #
 # 2023-10-24 21:14:56
-# - Added confirmation when closing window when there is more than one tab or 
+# - Added confirmation when closing window when there is more than one tab or
 #   there is a process still running.
 #
 # 2023-10-28 16:30:32
@@ -158,6 +158,10 @@
 #
 # 2024-06-10 10:34:47
 # - Added option for disabling activity marks and colors
+#
+# 2024-12-10 18:30:22
+# - Fix an issue with requesting closing terminal, which appear to be a
+#   single instance
 
 use Scalar::Util;
 
@@ -362,7 +366,7 @@ sub configure {
       # NOTE: switching between height +1 and height can be annoying,
       # especially well seen as flickering of part of the terminal on Intel
       # graphics and small fonts.
-   
+
       # this is an extremely dirty way to force a configurenotify, but who
       # cares
       $tab->XMoveResizeWindow (
@@ -660,11 +664,12 @@ _on wm_delete_window => sub {
       my %process_to_skip = ( "bash"=>1, "zsh"=>1, "ps"=>1, "fish"=>1, "sh"=>1 );
 
       foreach my $line (@subprocesses) {
-         chomp $line;
-         my @split_line = split(/ /, $line);
+         $line =~ s/^\s+|\s+$//g;
+         my @split_line = split(" ", $line);
          my $pid = @split_line[0];
-         my $proc_name = @split_line[1];
-         chomp $proc_name;
+         my @line = split(" ", @split_line[1]);
+         my $proc_name = @line[0];
+         $proc_name =~ s/^\s+|\s+$//g;
          if (!exists $process_to_skip{$proc_name}) {
             $subp_count = $subp_count + 1;
          } else {
@@ -707,7 +712,7 @@ _on wm_delete_window => sub {
 
             $tab->{overlay} = $tab->overlay_simple($marginc, $marginr,
                                                    "$msg\n$qst");
-            # action for removing all tabs will be decided in following 
+            # action for removing all tabs will be decided in following
             # method.
             $tab->enable(key_press => \&dialog_key_press);
          }
