@@ -162,6 +162,10 @@
 # 2024-12-10 18:30:22
 # - Fix an issue with requesting closing terminal, which appear to be a
 #   single instance
+#
+# 2026-04-21 16:29:49
+# - Fix small but constant memory consumption, which over time eventually will
+#   cause urxvt to consume huge amount of memory
 
 use Scalar::Util;
 
@@ -266,14 +270,16 @@ sub refresh {
    my ($self) = @_;
    my $tabs_no = (@{$self->{tabs}});
 
+   my $old_tabheight = $self->{tabheight} // 0;
+
    if ($self->{autohide} && $tabs_no == 1 &&
          ! $self->{cur}->{is_being_renamed}) {
       $self->{tabheight} = 0;
-      $self->configure;
-      $self->copy_properties;
-      return;
    } else {
       $self->{tabheight} = $self->{_tabheight};
+   }
+
+   if ($old_tabheight != $self->{tabheight}) {
       $self->configure;
       $self->copy_properties;
    }
@@ -282,6 +288,8 @@ sub refresh {
 
    my $text = " " x $ncol;
    my $rend = [($self->{rs_tabbar}) x $ncol];
+
+   undef $self->{tabofs};
 
    my ($ofs, $idx, @ofs) = (0, 0);
 
@@ -422,6 +430,9 @@ sub copy_properties {
          if $cur->[0] != $type or $cur->[1] != $format or $cur->[2] ne $items;
 
       $self->{current_properties}{$atom} = [$type, $format, $items];
+      undef $type;
+      undef $format;
+      undef $items;
    }
 
    # pass 2, delete all extraneous properties
