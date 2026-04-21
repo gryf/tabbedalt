@@ -183,7 +183,7 @@ several keysyms mapped to the actions:
 * ``Shift-Up``: ``rename_tab`` - for tab title renaming
 * ``Shift-Left``: ``prev_tab`` - for jumping to previous tab
 * ``Shift-Right``: ``next_tab`` - for jumping to next tab
-* ``Shift-Left``: ``move_tab_left`` - for moving tab to the left
+* ``Control-Left``: ``move_tab_left`` - for moving tab to the left
 * ``Control-Right``: ``move_tab_right`` - for moving tab to the right
 * ``Control-1..0``: ``jump_to_tab`` - for quickly jumping into first tenth tabs
 
