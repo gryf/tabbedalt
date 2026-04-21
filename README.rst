@@ -200,9 +200,11 @@ It might be wise to define own shortcuts before disabling default keys.
    ``tab-command``, for example::
 
        URxvt.keysym.Control-t: tabbedalt:new_tab:htop:htop
+       URxvt.keysym.Control-Shift-R: tabbedalt:new_tab:root:sudo su -
 
    where pressing control+t it will run new tab with title ``htop`` and command
-   ``htop``.
+   ``htop``, while pressing control+shift+r will create tab with ``root``
+   title and run ``sudo su -`` inside.
 
    Both title and command may be omitted. If so, default title ``shell`` will
    be used in absence of title, and default shell will be run on missing
@@ -295,36 +297,6 @@ or `kdialog`_::
     URxvt.tabbedalt.confirm-program: kdialog --title 'Close window' --yesno
 
 or… any other dialog programs which fulfill the above criteria.
-
-Creating specific commands/shells
----------------------------------
-
-Let's assume, that one want to add three kind of custom shells:
-
-* simple one (default shell in the system),
-* midnight commander,
-* root (namely - su command)
-
-A way to do this is to associate keystroke for it in ``.Xdefaults`` using
-urxvts ``keysym`` option, and the actions described above::
-
-    URxvt.keysym.Control-Shift-N: tabbedalt:new_tab:shell
-    URxvt.keysym.Control-Shift-R: tabbedalt:new_tab:root:su -
-    URxvt.keysym.Control-Shift-M: tabbedalt:new_tab:mc:mc
-
-Resource values are colon separated values, which are in order:
-
-* **plugin name:command**, which in this case of creating new tab will be
-  ``tabbedalt:new_tab``.
-* **title of the tab**, it could be anything but the colon.
-* **optional command**. If omitted, default shell will be launched.
-
-Renaming tabs
--------------
-
-On runtime, tabs can be renamed using (by default) ``Shift+Up`` - now you can
-type name for the tab. ``Return`` accept change, ``ESC`` cancels it. This
-feature was taken from `stepb`_ tabbedx repository.
 
 .. _urxvt-unicode: http://software.schmorp.de/pkg/rxvt-unicode.html
 .. _activity indicator: http://mina86.com/2009/05/16/tabbed-urxvt-extension/
