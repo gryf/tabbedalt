@@ -166,6 +166,12 @@
 # 2026-04-21 16:29:49
 # - Fix small but constant memory consumption, which over time eventually will
 #   cause urxvt to consume huge amount of memory
+#
+# 2026-04-21 18:34:16
+# - Make some more optimization on memory usage - remove data from destroyed
+#   tab and disable its hooks
+# - update tab property notifications, don't update it too often, clean up X 
+#   properties variables after use, update only changed X properties
 
 use Scalar::Util;
 
@@ -755,6 +761,18 @@ sub tab_start {
 sub tab_destroy {
    my ($self, $tab) = @_;
 
+   # Disable hooks and remove data from tab
+   $tab->disable('line_update', 'key_press', 'property_notify', 'action', 'start', 'destroy');
+   delete $tab->{lastActivity};
+   delete $tab->{is_being_renamed};
+   delete $tab->{old_name};
+   delete $tab->{new_name};
+   delete $tab->{overlay};
+   delete $tab->{main};
+   delete $tab->{parent};
+   delete $tab->{'tabbedalt_main'};
+   delete $tab->{name};
+
    $self->{tabs} = [ grep $_ != $tab, @{ $self->{tabs} } ];
 
    if (@{ $self->{tabs} }) {
@@ -786,8 +804,37 @@ sub command {
 sub tab_property_notify {
    my ($self, $tab, $event) = @_;
 
-   $self->copy_properties
-      if $event->{window} == $tab->parent;
+   return () unless $event->{window} == $tab->parent;
+   return () unless $tab == $self->{cur};
+
+   # skip if called too often (within 0.1s)
+   my $now = urxvt::NOW;
+   my $last = $self->{last_property_update} // 0;
+   if ($now - $last < 0.1) {
+      return ();
+   }
+   $self->{last_property_update} = $now;
+
+   # update only the changed property instead of all properties
+   my $atom = $event->{atom};
+   my ($type, $format, $items) = $self->XGetWindowProperty ($tab->parent, $atom);
+
+   my $wm_normal_hints = $self->XInternAtom ("WM_NORMAL_HINTS");
+
+   # fix up size hints
+   if ($atom == $wm_normal_hints) {
+      my (@hints) = unpack "l!*", $items;
+      $hints[$_] += $self->{tabheight} for (4, 6, 16);
+      $items = pack "l!*", @hints;
+   }
+
+   $self->XChangeProperty ($self->parent, $atom, $type, $format, $items);
+   $self->{current_properties}{$atom} = [$type, $format, $items];
+
+   # free memory from X properties
+   undef $type;
+   undef $format;
+   undef $items;
 
    ()
 }

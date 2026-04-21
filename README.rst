@@ -266,7 +266,7 @@ additional resources that can be set. First one, disabled by default is::
 
     URxvt.tabbedalt.confirm-quit: false
 
-When set to ``true`` it will either execute a message program or will display 
+When set to ``true`` it will either execute a message program or will display
 an urxvt overlay with the dialog directly on current tab. Note that overlay
 dialog will expect the user to either press:
 
