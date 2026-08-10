@@ -285,8 +285,9 @@ sub refresh {
       $self->{tabheight} = $self->{_tabheight};
    }
 
+   $self->configure;
+
    if ($old_tabheight != $self->{tabheight}) {
-      $self->configure;
       $self->copy_properties;
    }
 
