@@ -415,8 +415,8 @@ sub copy_properties {
    my $current = delete $self->{current_properties};
 
    # pass 1: copy over properties different or nonexisting
-   for my $atom ($tab->XListProperties ($tab->parent)) {
-      my ($type, $format, $items) = $self->XGetWindowProperty ($tab->parent, $atom);
+   for my $atom ($tab->XListProperties($tab->parent)) {
+      my ($type, $format, $items) = $self->XGetWindowProperty($tab->parent, $atom);
 
       # fix up size hints
       if ($atom == $wm_normal_hints) {
@@ -428,22 +428,29 @@ sub copy_properties {
          $hints[$_] += $self->{tabheight} for (4, 6, 16);
 
          $items = pack "l!*", @hints;
+         undef @hints;
       }
 
       my $cur = delete $current->{$atom};
 
       # update if changed, we assume empty items and zero type and format will not happen
-      $self->XChangeProperty ($self->parent, $atom, $type, $format, $items)
+      $self->XChangeProperty($self->parent, $atom, $type, $format, $items)
          if $cur->[0] != $type or $cur->[1] != $format or $cur->[2] ne $items;
 
       $self->{current_properties}{$atom} = [$type, $format, $items];
+
       undef $type;
       undef $format;
       undef $items;
+      undef $atom;
+      undef $cur;
    }
 
    # pass 2, delete all extraneous properties
    $self->XDeleteProperty ($self->parent, $_) for keys %$current;
+   
+   undef $current;
+   undef $wm_normal_hints;
 }
 
 sub make_current {
