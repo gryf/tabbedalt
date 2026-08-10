@@ -815,14 +815,6 @@ sub tab_property_notify {
    return () unless $event->{window} == $tab->parent;
    return () unless $tab == $self->{cur};
 
-   # skip if called too often (within 0.1s)
-   my $now = urxvt::NOW;
-   my $last = $self->{last_property_update} // 0;
-   if ($now - $last < 0.1) {
-      return ();
-   }
-   $self->{last_property_update} = $now;
-
    # update only the changed property instead of all properties
    my $atom = $event->{atom};
    my ($type, $format, $items) = $self->XGetWindowProperty ($tab->parent, $atom);
