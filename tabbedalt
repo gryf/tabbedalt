@@ -170,8 +170,14 @@
 # 2026-04-21 18:34:16
 # - Make some more optimization on memory usage - remove data from destroyed
 #   tab and disable its hooks
-# - update tab property notifications, don't update it too often, clean up X 
+# - update tab property notifications, don't update it too often, clean up X
 #   properties variables after use, update only changed X properties
+#
+# 2026-08-10 17:20:53
+# - remove variables in copy_properties to free memory
+# - call configure() every time on refresh
+# - removed throttling to suppress tab property notifications, as they need to
+#   be applied as every call there is different atom to process.
 
 use Scalar::Util;
 
@@ -448,7 +454,7 @@ sub copy_properties {
 
    # pass 2, delete all extraneous properties
    $self->XDeleteProperty ($self->parent, $_) for keys %$current;
-   
+
    undef $current;
    undef $wm_normal_hints;
 }
