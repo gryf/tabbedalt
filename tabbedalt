@@ -178,6 +178,13 @@
 # - call configure() every time on refresh
 # - removed throttling to suppress tab property notifications, as they need to
 #   be applied as every call there is different atom to process.
+#
+# 2026-08-11 18:42:45
+# - removed call copy_properties() call from refresh() to avoid unnecessary 
+#   Xlib interaction (to spare memory as the consequence) and rely only on 
+#   notifications.
+# - removed call for configure() from places, which will call refresh() as in 
+#   refresh() configure will be called anyway.
 
 use Scalar::Util;
 
@@ -292,10 +299,6 @@ sub refresh {
    }
 
    $self->configure;
-
-   if ($old_tabheight != $self->{tabheight}) {
-      $self->copy_properties;
-   }
 
    my $ncol = $self->ncol;
 
@@ -480,7 +483,6 @@ sub make_current {
    $self->{cur} = $tab;
    $tab->enable_activity_hook(0);
 
-   $self->configure;
    $self->copy_properties;
 
    $tab->focus_out; # just in case, should be a nop
@@ -679,7 +681,6 @@ _on start => sub {
 _on configure_notify => sub {
    my ($self, $event) = @_;
 
-   $self->configure;
    $self->refresh;
 
    ()
@@ -838,6 +839,7 @@ sub tab_property_notify {
    $self->{current_properties}{$atom} = [$type, $format, $items];
 
    # free memory from X properties
+   undef $wm_normal_hints;
    undef $type;
    undef $format;
    undef $items;
