@@ -185,6 +185,10 @@
 #   notifications.
 # - removed call for configure() from places, which will call refresh() as in 
 #   refresh() configure will be called anyway.
+#
+# 2026-08-12 20:40:54
+# - narrow down X properties which will be updated during tab_property_notify,
+#   which should slightly improve memory consumption.
 
 use Scalar::Util;
 
@@ -822,8 +826,11 @@ sub tab_property_notify {
    return () unless $event->{window} == $tab->parent;
    return () unless $tab == $self->{cur};
 
-   # update only the changed property instead of all properties
+   # update only the changed selected property instead of all properties
    my $atom = $event->{atom};
+   my %allowed = map { $_ => 1 } qw(WM_NORMAL_HINTS _NET_WM_NAME WM_NAME);
+   return () unless ($allowed{$self->XGetAtomName($atom)});
+
    my ($type, $format, $items) = $self->XGetWindowProperty ($tab->parent, $atom);
 
    my $wm_normal_hints = $self->XInternAtom ("WM_NORMAL_HINTS");
