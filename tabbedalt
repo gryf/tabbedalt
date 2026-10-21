@@ -189,6 +189,11 @@
 # 2026-08-12 20:40:54
 # - narrow down X properties which will be updated during tab_property_notify,
 #   which should slightly improve memory consumption.
+#
+# 2026-10-21 20:04:39
+# - Fixed outstanding issue with tabbedalt extension ignoring geometry
+#   postion by storing WM hints from main window before first child will
+#   overwrite them. Note, original tabbed extension have that issue too.
 
 use Scalar::Util;
 
@@ -435,6 +440,15 @@ sub copy_properties {
       if ($atom == $wm_normal_hints) {
          my (@hints) = unpack "l!*", $items;
 
+         # restore original window position hints to the tabs
+         if (my $pos = $self->{initial_position_hints}) {
+            if ($pos->[0]) {
+               $hints[0] = ($hints[0] & ~5) | $pos->[0];
+               $hints[1] = $pos->[1];
+               $hints[2] = $pos->[2];
+            }
+         }
+
          # TODO: investigate hints a little bit further, since it ignores
          # window position and place it at 0x0.
          # $hints[$_] += $self->{tabheight} for (0, 1, 4, 6, 16);
@@ -662,6 +676,21 @@ _on start => sub {
    $self->{_tabheight} = $self->int_bwidth + $self->fheight + $self->lineSpace;
 
    $self->cmd_parse ("\033[?25l");
+
+   # store initial hints about position before first tab overwrite'em.
+   my $wm_normal_hints = $self->XInternAtom ("WM_NORMAL_HINTS");
+   my ($type, $format, $items) =
+      $self->XGetWindowProperty($self->parent, $wm_normal_hints);
+
+   if ($format == 32 && defined $items && length $items >= 12) {
+      my (@hints) = unpack "l!*", $items;
+      $self->{initial_position_hints} = [
+         $hints[0] & 5, $hints[1], $hints[2]
+      ];
+   }
+   undef $type;
+   undef $format;
+   undef $items;
 
    my @argv = $self->argv;
 
